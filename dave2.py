@@ -537,6 +537,45 @@ def circle_area(r):
 def parse_list(s):
     return list(map(float, s.split(",")))
 
+def era(earned_runs, innings_pitched):
+    return earned_runs * 9 / innings_pitched
+
+def batting_average(hits, at_bats):
+    return hits / at_bats
+
+def obp(hits, walks, hbp, at_bats, sac_flies):
+    return (hits + walks + hbp) / (at_bats + walks + hbp + sac_flies)
+
+def slg(singles, doubles, triples, home_runs, at_bats):
+    return (
+        singles +
+        2 * doubles +
+        3 * triples +
+        4 * home_runs
+    ) / at_bats
+
+def ops(singles, doubles, triples, home_runs,
+        hits, walks, hbp, at_bats, sac_flies):
+    return (
+        slg(singles, doubles, triples, home_runs, at_bats)
+        + obp(hits, walks, hbp, at_bats, sac_flies)
+    )
+
+def whip(walks, hits, innings):
+    return (walks + hits) / innings
+
+def k_per_9(strikeouts, innings):
+    return strikeouts * 9 / innings
+
+def bb_per_9(walks, innings):
+    return walks * 9 / innings
+
+def hr_per_9(home_runs, innings):
+    return home_runs * 9 / innings
+
+def fielding_percentage(putouts, assists, errors):
+    return (putouts + assists) / (putouts + assists + errors)
+
 def sphere_volume(r):
     return (4/3) * math.pi * r**3
 
@@ -2788,10 +2827,19 @@ variables = {
     "iqr": iqr,
 
     "percentile": percentile,
-
+    "era": era,
+    "batting_average": batting_average,
+    "avg": batting_average,
+    "obp": obp,
+    "slg": slg,
+    "ops": ops,
     "skewness": skewness,
     "kurtosis": kurtosis,
-
+    "whip": whip,
+    "k9": k_per_9,
+    "bb9": bb_per_9,
+    "hr9": hr_per_9,
+    "fielding_percentage": fielding_percentage,
     "geometric_mean": geometric_mean,
     "harmonic_mean": harmonic_mean,
 
