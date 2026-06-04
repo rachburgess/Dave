@@ -481,6 +481,93 @@ def largest_prime_factor(n):
 def totient(n):
     return sp.totient(n)
 
+import random
+
+# =========================================================
+# NUMBER GUESSING GAME
+# =========================================================
+
+current_target = None
+current_maximum = None
+
+
+def start_guess_game(maximum=100):
+    """
+    Start a new guessing game.
+
+    Example:
+        start_guess_game(100)
+    """
+    global current_target, current_maximum
+
+    current_maximum = int(maximum)
+    current_target = random.randint(1, current_maximum)
+
+    return f"Game started! Guess a number between 1 and {current_maximum}."
+
+
+def guess(number):
+    """
+    Make a guess.
+
+    Example:
+        guess(50)
+    """
+    global current_target, current_maximum
+
+    if current_target is None:
+        return "No active game. Start one with start_guess_game(maximum)."
+
+    number = int(number)
+
+    if number < current_target:
+        return "Too low!"
+    elif number > current_target:
+        return "Too high!"
+    else:
+        answer = current_target
+
+        current_target = None
+        current_maximum = None
+
+        return f"Correct! The answer was {answer}."
+
+
+def reveal_answer():
+    """
+    Reveal the current answer.
+    """
+    global current_target
+
+    if current_target is None:
+        return "No active game."
+
+    return current_target
+
+
+def end_guess_game():
+    """
+    End the current game.
+    """
+    global current_target, current_maximum
+
+    current_target = None
+    current_maximum = None
+
+    return "Game ended."
+
+
+def game_status():
+    """
+    Show current game status.
+    """
+    global current_target, current_maximum
+
+    if current_target is None:
+        return "No active game."
+
+    return f"Active game: guessing between 1 and {current_maximum}."
+
 def decimal(x):
     return float(x)
 
@@ -2776,6 +2863,12 @@ variables = {
     "simplify": sp.simplify,
     "simplify_full": simplify_full,
 
+    "start_guess_game": start_guess_game,
+    "guess": guess,
+    "reveal_answer": reveal_answer,
+    "end_guess_game": end_guess_game,
+    "game_status": game_status,
+    
     "factor": sp.factor,
     "collect": collect_terms,
 
@@ -3186,7 +3279,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.2. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.3. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
