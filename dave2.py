@@ -33,7 +33,7 @@ sys.set_int_max_str_digits(0)
 # AUTO INSTALL REQUIRED PACKAGES
 # =========================================================
 
-import sys
+import yfinance as yf
 import inspect
 import subprocess
 import importlib
@@ -377,6 +377,56 @@ def molarity(moles_value, liters):
 def ideal_gas_volume(n, T, P):
     R = 0.082057
     return n * R * T / P
+
+def stock_metrics(ticker_symbol):
+    try:
+        ticker = yf.Ticker(str(ticker_symbol).upper())
+        df = ticker.history(period="max")
+
+        if df.empty:
+            return f"No data found for ticker '{ticker_symbol}'."
+
+        current_price = float(df["Close"].iloc[-1])
+
+        result = []
+        result.append(f"{ticker_symbol.upper()} Stock Performance")
+        result.append(f"Current Price: ${current_price:.2f}")
+        result.append("")
+
+        periods = {
+            "1 Day": 1,
+            "1 Week": 5,
+            "1 Month": 21,
+            "1 Year": 252,
+            "5 Years": 252 * 5,
+            "Max Time": len(df) - 1
+        }
+
+        for name, offset in periods.items():
+
+            if len(df) > offset:
+
+                past_price = float(df["Close"].iloc[-(offset + 1)])
+
+                change = current_price - past_price
+                pct = (change / past_price) * 100
+
+                sign = "+" if change >= 0 else ""
+
+                result.append(
+                    f"{name}: {sign}${change:.2f} ({sign}{pct:.2f}%)"
+                )
+
+            else:
+
+                result.append(
+                    f"{name}: Insufficient historical data"
+                )
+
+        return "\n".join(result)
+
+    except Exception as e:
+        return f"Stock error: {e}"
 
 def ideal_gas_pressure(n, T, V):
     R = 0.082057
@@ -2846,7 +2896,8 @@ variables = {
     "correlation": correlation,
     "covariance": covariance,
     "corr_matrix": corr_matrix,
-
+    "stock": stock_metrics,
+    "stock_metrics": stock_metrics,
     "z_scores": z_scores,
     "moving_average": moving_average,
     "correlation_strength": correlation_strength,
@@ -3135,7 +3186,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.2. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
