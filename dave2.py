@@ -1871,6 +1871,22 @@ def matrix_norm(m):
 def matrix_rref(m):
     return sp.Matrix(m).rref()[0]
 
+def dividend_yield(symbol):
+    import yfinance as yf
+
+    try:
+        info = yf.Ticker(symbol.upper()).info
+
+        dy = info.get("dividendYield")
+
+        if dy is None:
+            return 0.0
+
+        return float(dy) * 100  # return as percentage
+
+    except Exception as e:
+        return f"Error: {e}"
+
 def matrix_columnspace(m):
     return sp.Matrix(m).columnspace()
 
@@ -3346,7 +3362,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.8. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.4. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
