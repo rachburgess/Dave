@@ -494,6 +494,20 @@ def electrons(Z):
 def neutrons(A, Z):
     return A - Z
 
+def pe_ratio(symbol):
+    import yfinance as yf
+
+    try:
+        pe = yf.Ticker(symbol).info.get("trailingPE")
+
+        if pe is None:
+            return "No P/E ratio available"
+
+        return float(pe)
+
+    except Exception as e:
+        return f"Error: {e}"
+
 def ph(H):
     return -math.log10(H)
 
@@ -3332,7 +3346,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.7. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.8. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
