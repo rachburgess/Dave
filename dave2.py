@@ -362,6 +362,45 @@ def matrix_rref(A):
 def matrix_nullspace(A):
     return sp.Matrix(A).nullspace()
 
+
+def stock(symbol):
+    try:
+        ticker = yf.Ticker(symbol.upper())
+        df = ticker.history(period="max")
+
+        if df.empty:
+            return f"No data found for {symbol}"
+
+        current_price = df["Close"].iloc[-1]
+
+        output = []
+        output.append(f"{symbol.upper()} Stock Performance")
+        output.append(f"Current Price: ${current_price:.2f}")
+
+        periods = {
+            "1 Day": 1,
+            "1 Week": 5,
+            "1 Month": 21,
+            "1 Year": 252,
+            "5 Years": 252 * 5,
+            "Max Time": len(df) - 1
+        }
+
+        for period_name, offset in periods.items():
+            if len(df) > offset:
+                past_price = df["Close"].iloc[-(offset + 1)]
+                change = current_price - past_price
+                pct = (change / past_price) * 100
+
+                output.append(
+                    f"{period_name}: {change:+.2f} ({pct:+.2f}%)"
+                )
+
+        return "\n".join(output)
+
+    except Exception as e:
+        return f"Error: {e}"
+
 def matrix_columnspace(A):
     return sp.Matrix(A).columnspace()
 
@@ -3279,7 +3318,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.3. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.5. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
