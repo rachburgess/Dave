@@ -347,6 +347,25 @@ def molecules(moles_value):
 def matrix_transpose(A):
     return np.array(A).T
 
+def stock_name(symbol):
+    import yfinance as yf
+
+    try:
+        info = yf.Ticker(symbol.upper()).info
+
+        name = info.get("longName")
+
+        if name is None:
+            name = info.get("shortName")
+
+        if name is None:
+            return "Unknown Company"
+
+        return name
+
+    except Exception as e:
+        return f"Error: {e}"
+
 def matrix_rank(A):
     return sp.Matrix(A).rank()
 
