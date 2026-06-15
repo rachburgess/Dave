@@ -517,6 +517,14 @@ def largest_prime_factor(n):
     factors = sp.factorint(n)
     return max(factors.keys())
 
+def stock_price(symbol):
+    import yfinance as yf
+
+    ticker = yf.Ticker(symbol.upper())
+    info = ticker.info
+
+    return float(info["currentPrice"])
+
 def totient(n):
     return sp.totient(n)
 
@@ -3318,7 +3326,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.5. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.6. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
