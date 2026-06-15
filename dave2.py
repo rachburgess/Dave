@@ -413,6 +413,12 @@ def characteristic_polynomial(A):
 def molarity(moles_value, liters):
     return moles_value / liters
 
+def market_cap(symbol):
+    import yfinance as yf
+
+    info = yf.Ticker(symbol).info
+    return float(info["marketCap"])
+
 def ideal_gas_volume(n, T, P):
     R = 0.082057
     return n * R * T / P
@@ -3326,7 +3332,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.6. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.7. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
