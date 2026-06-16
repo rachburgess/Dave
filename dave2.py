@@ -2870,6 +2870,33 @@ def caesar_encrypt(text, shift):
 def caesar_decrypt(text, shift):
     return caesar_encrypt(text, -shift)
 
+def tr(key):
+    return languages.get(language, languages["en"]).get(key, key)
+
+def english():
+    return set_language("en")
+
+def spanish():
+    return set_language("es")
+
+def french():
+    return set_language("fr")
+
+def german():
+    return set_language("de")
+
+def japanese():
+    return set_language("ja")
+
+def set_language(lang):
+    global language
+
+    if lang in languages:
+        language = lang
+        return f"Language set to {lang}"
+
+    return "Unsupported language"
+
 # =========================================================
 # ASCII GRAPH
 # =========================================================
@@ -2919,6 +2946,60 @@ def ascii_plot(expr):
 # VARIABLES DICT
 # =========================================================
 
+language = "en"
+
+languages = {
+    "en": {
+        "welcome": "Welcome",
+        "goodbye": "Goodbye",
+        "help": "Help",
+        "answer": "Answer",
+        "error": "Error",
+        "enter_equation": "Enter equation here:",
+        "unknown_command": "Unknown command",
+    },
+
+    "es": {
+        "welcome": "Bienvenido",
+        "goodbye": "Adiós",
+        "help": "Ayuda",
+        "answer": "Respuesta",
+        "error": "Error",
+        "enter_equation": "Ingrese una ecuación:",
+        "unknown_command": "Comando desconocido",
+    },
+
+    "fr": {
+        "welcome": "Bienvenue",
+        "goodbye": "Au revoir",
+        "help": "Aide",
+        "answer": "Réponse",
+        "error": "Erreur",
+        "enter_equation": "Entrez une équation :",
+        "unknown_command": "Commande inconnue",
+    },
+
+    "de": {
+        "welcome": "Willkommen",
+        "goodbye": "Tschüss",
+        "help": "Hilfe",
+        "answer": "Antwort",
+        "error": "Fehler",
+        "enter_equation": "Geben Sie eine Gleichung ein:",
+        "unknown_command": "Unbekannter Befehl",
+    },
+
+    "ja": {
+        "welcome": "ようこそ",
+        "goodbye": "さようなら",
+        "help": "ヘルプ",
+        "answer": "答え",
+        "error": "エラー",
+        "enter_equation": "式を入力してください:",
+        "unknown_command": "不明なコマンド",
+    }
+}
+
 x, y, z = sp.symbols('x y z')
 
 variables = {
@@ -2934,6 +3015,7 @@ variables = {
 
     # ================= TRIG =================
 
+    "set_language": set_language,
     "sin": sin_wrapper,
     "cos": cos_wrapper,
     "tan": tan_wrapper,
@@ -3381,7 +3463,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.4. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.5. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
