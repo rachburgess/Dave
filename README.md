@@ -2,7 +2,7 @@ Welcome to Dave! This calculator is designed to be a high performance calculator
 
 
 
-Dave version 1.0 requires you to install the following dependencies so run the following commands (for MacOS only):
+Dave version 1.0.5 requires you to install the following dependencies so run the following commands (for MacOS only):
 
 
 
@@ -54,4 +54,4 @@ pip3 install -—break-system-packages re
 
 pip3 install --break-system-packages yfinance
 
-To run type python3 dave2.py into your terminal.
+To run type python3 dave2.py into your terminal. If anything isn't working, please add it into the comments, and I will do my best to fix it. I you have any suggestions, I will also do my best to integrate them in, so you can put those in the comments too.
