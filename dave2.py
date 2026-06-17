@@ -2757,24 +2757,6 @@ Current Year:
 year
 
 =========================================================
-======================== LANGUAGES ========================
-
-English:
-lang en
-
-Spanish:
-lang es
-
-French:
-lang fr
-
-German:
-lang de
-
-Japanese:
-lang jp
-
-=========================================================
 ======================== HISTORY ========================
 
 Show History:
@@ -2796,6 +2778,285 @@ about
 
 Quit:
 quit, q, or exit
+
+=========================================================
+======================== STOCK MARKET ========================
+=========================================================
+
+Stock Performance:
+stock("SPY")
+stock("AAPL")
+
+Current Stock Price:
+stock_price("MSFT")
+
+Market Capitalization:
+market_cap("NVDA")
+
+P/E Ratio:
+pe_ratio("AAPL")
+
+Dividend Yield:
+dividend_yield("KO")
+
+Company Name:
+stock_name("GOOG")
+
+Examples:
+stock("TSLA")
+stock_price("AMD")
+market_cap("AMZN")
+
+=========================================================
+======================== BASEBALL ========================
+=========================================================
+
+ERA:
+era(earned_runs, innings_pitched)
+
+Example:
+era(25, 180)
+
+Batting Average:
+batting_average(hits, at_bats)
+
+Example:
+batting_average(150, 500)
+
+On Base Percentage:
+obp(hits, walks, hbp, at_bats, sacrifice_flies)
+
+Example:
+obp(150, 60, 5, 500, 4)
+
+Slugging Percentage:
+slg(singles, doubles, triples, home_runs, at_bats)
+
+Example:
+slg(90, 30, 5, 25, 500)
+
+OPS:
+ops(slg_value, obp_value)
+
+Example:
+ops(0.520, 0.380)
+
+=========================================================
+======================== ADVANCED CHEMISTRY ========================
+=========================================================
+
+Moles:
+moles(18, 18.015)
+
+Mass From Moles:
+mass_from_moles(2, 18.015)
+
+Molecules:
+molecules(1)
+
+Molarity:
+molarity(0.5, 1.0)
+
+Ideal Gas Volume:
+ideal_gas_volume(1,273,1)
+
+Ideal Gas Temperature:
+ideal_gas_temperature(1,22.4,1)
+
+Ideal Gas Moles:
+ideal_gas_moles(1,273,22.4)
+
+pH:
+ph(1e-7)
+
+Examples:
+ph(0.001)
+ph(1e-4)
+
+=========================================================
+======================== ADVANCED PHYSICS ========================
+=========================================================
+
+Velocity:
+velocity(100,5)
+
+Acceleration:
+acceleration(20,4)
+
+Density:
+density(10,2)
+
+Pressure:
+pressure(100,10)
+
+Work:
+work(10,5)
+
+Power:
+power(100,10)
+
+Frequency:
+frequency(0.02)
+
+Period:
+period(50)
+
+Wavelength:
+wavelength(3e8,5e14)
+
+Escape Velocity:
+escape_velocity(5.97e24,6.37e6)
+
+Projectile Range:
+projectile_range(100,45)
+
+Schwarzschild Radius:
+schwarzschild(5.97e24)
+
+Radioactive Decay:
+decay(1000,0.693,10)
+
+Gravity Force:
+gravity_force(5.97e24,1000,6.37e6)
+
+Momentum Vector:
+momentum_vector(5,[1,2,3])
+
+=========================================================
+======================== ADVANCED MATRIX ========================
+=========================================================
+
+Matrix Norm:
+matrix_norm([[1,2],[3,4]])
+
+Reduced Row Echelon Form:
+matrix_rref([[1,2],[3,4]])
+
+Null Space:
+matrix_nullspace([[1,2],[3,4]])
+
+Column Space:
+matrix_columnspace([[1,2],[3,4]])
+
+Row Space:
+matrix_rowspace([[1,2],[3,4]])
+
+Characteristic Polynomial:
+characteristic_polynomial([[1,2],[3,4]])
+
+=========================================================
+======================== ADVANCED STATISTICS ========================
+=========================================================
+
+Quartiles:
+quartiles([1,2,3,4,5])
+
+Interquartile Range:
+iqr([1,2,3,4,5])
+
+Skewness:
+skewness([1,2,3,4,5])
+
+Kurtosis:
+kurtosis([1,2,3,4,5])
+
+Geometric Mean:
+geometric_mean([1,2,3,4])
+
+Harmonic Mean:
+harmonic_mean([1,2,3,4])
+
+=========================================================
+======================== ADVANCED GRAPHING ========================
+=========================================================
+
+Bar Chart:
+bar_chart(["A","B","C"], [10,20,15])
+
+Pie Chart:
+pie_chart(["A","B","C"], [10,20,15])
+
+Box Plot:
+box_plot([1,2,3,4,5,6,7])
+
+Stem Plot:
+stem_plot([1,2,3,4,5])
+
+Graph Multiple Functions:
+graph_many(["sin(x)", "cos(x)", "x**2"])
+
+=========================================================
+======================== FILE UTILITIES ========================
+=========================================================
+
+Save Note:
+save_note("my_note.txt", "Hello World")
+
+Read Note:
+read_note("my_note.txt")
+
+=========================================================
+======================== DATA ANALYSIS ========================
+=========================================================
+
+Load CSV:
+load_csv("data.csv")
+
+Correlation Matrix:
+corr_matrix(data)
+
+Histogram:
+histogram([1,2,3,4,5])
+
+Scatter Plot:
+scatter([1,2,3],[4,5,6])
+
+Pretty JSON:
+pretty_json(data)
+
+=========================================================
+======================== ADVANCED CRYPTOGRAPHY ========================
+=========================================================
+
+MD5:
+md5_hash("hello")
+
+SHA1:
+sha1_hash("hello")
+
+SHA256:
+sha256_hash("hello")
+
+SHA512:
+sha512_hash("hello")
+
+Base64 Encode:
+base64_encode("hello")
+
+Base64 Decode:
+base64_decode(encoded)
+
+XOR Encrypt:
+xor_encrypt("hello","key")
+
+Vigenere Encrypt:
+vigenere_encrypt("hello","key")
+
+Vigenere Decrypt:
+vigenere_decrypt(ciphertext,"key")
+
+=========================================================
+======================== GAMES ========================
+=========================================================
+
+Guessing Game:
+start_guess_game(100)
+
+Roll Dice:
+roll()
+
+Draw Card:
+draw_card()
 
 =========================================================
 ======================== SPECIAL FEATURES ========================
