@@ -16,6 +16,8 @@ brew install python
 
 brew install pip3
 
+pip3 install --break-system-packages scipy
+
 pip3 install —-break-system-packages subprocess
 
 pip3 install —-break-system-packages importlib 
