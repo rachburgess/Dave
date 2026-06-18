@@ -44,8 +44,9 @@ required_packages = {
     "numpy": "numpy",
     "matplotlib": "matplotlib",
     "rich": "rich",
-    "pwinput": "pwinput",
+    "yfinance": "yfinance",
     "pandas": "pandas",
+    "scipy": "scipy",
 }
 
 def install_and_import(import_name, package_name=None):
@@ -89,6 +90,7 @@ print("Starting Dave...")
 
 import math
 
+import scipy
 import codecs
 import pandas as pd 
 import sympy as sp
