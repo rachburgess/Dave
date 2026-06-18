@@ -440,6 +440,23 @@ def market_cap(symbol):
     info = yf.Ticker(symbol).info
     return float(info["marketCap"])
 
+def orbital_period(radius, central_mass):
+    G = 6.67430e-11
+    return 2 * math.pi * math.sqrt(radius**3 / (G * central_mass))
+
+def luminosity(radius, temperature):
+    sigma = 5.670374419e-8
+    return 4 * math.pi * radius**2 * sigma * temperature**4
+
+def redshift(emitted, observed):
+    return (observed - emitted) / emitted
+
+def distance_modulus(apparent_mag, absolute_mag):
+    return 10 ** ((apparent_mag - absolute_mag + 5) / 5)
+
+def hill_sphere(a, m, M):
+    return a * (m / (3 * M)) ** (1/3)
+
 def ideal_gas_volume(n, T, P):
     R = 0.082057
     return n * R * T / P
@@ -1553,6 +1570,25 @@ def polar_complex(r, theta):
         r * math.sin(theta)
     )
 
+def weight_to_atomic(weight_percent, atomic_weights):
+    moles = {}
+
+    for e,w in weight_percent.items():
+        moles[e] = w / atomic_weights[e]
+
+    total = sum(moles.values())
+
+    return {
+        e:100*m/total
+        for e,m in moles.items()
+    }
+
+def rule_of_mixtures(values, fractions):
+    return sum(v*f for v,f in zip(values,fractions))
+
+def alloy_density(densities, fractions):
+    return 1 / sum(f/d for d,f in zip(densities,fractions))
+
 def convert(value, from_unit, to_unit):
 
     value = float(value)
@@ -1686,6 +1722,26 @@ def solve_quadratic(a, b, c):
 
     return [r1, r2]
 
+def resistance(v, i):
+    return v / i
+
+def current(v, r):
+    return v / r
+
+def capacitance(q, v):
+    return q / v
+
+def inductance(v, di_dt):
+    return v / di_dt
+
+def reactance(f, c):
+    return 1 / (2 * math.pi * f * c)
+
+def impedance(r, x):
+    return math.sqrt(r**2 + x**2)
+
+def power_factor(real_power, apparent_power):
+    return real_power / apparent_power
 
 def solve_cubic(expr):
     return sp.solve(sp.sympify(expr), x)
@@ -1892,6 +1948,26 @@ def matrix_norm(m):
 def matrix_rref(m):
     return sp.Matrix(m).rref()[0]
 
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371
+
+    lat1,lon1,lat2,lon2 = map(
+        math.radians,
+        [lat1,lon1,lat2,lon2]
+    )
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = (
+        math.sin(dlat/2)**2 +
+        math.cos(lat1) *
+        math.cos(lat2) *
+        math.sin(dlon/2)**2
+    )
+
+    return 2 * R * math.asin(math.sqrt(a))
+
 def dividend_yield(symbol):
     import yfinance as yf
 
@@ -1936,6 +2012,18 @@ def iqr(data):
         np.percentile(data,25)
     )
 
+def stress(force, area):
+    return force / area
+
+def strain(delta_length, original_length):
+    return delta_length / original_length
+
+def youngs_modulus(stress_value, strain_value):
+    return stress_value / strain_value
+
+def thermal_expansion(alpha, length, delta_t):
+    return alpha * length * delta_t
+
 def skewness(data):
 
     arr = np.array(data)
@@ -1966,8 +2054,52 @@ def kurtosis(data):
         ) / n
     ) - 3
 
+def transpose(m):
+    return sp.Matrix(m).T
+
+def matrix_rank(m):
+    return sp.Matrix(m).rank()
+
+def jacobian(funcs, vars):
+    return sp.Matrix(funcs).jacobian(vars)
+
+def qr(m):
+    return sp.Matrix(m).QRdecomposition()
+
+def lu(m):
+    return sp.Matrix(m).LUdecomposition()
+
+def projection(v, onto):
+    v = sp.Matrix(v)
+    onto = sp.Matrix(onto)
+    return (v.dot(onto) / onto.dot(onto)) * onto
+
 def geometric_mean(data):
     return statistics.geometric_mean(data)
+
+def laplace_transform_expr(expr):
+    return sp.laplace_transform(expr, x, sp.Symbol('s'))
+
+def inverse_laplace(expr):
+    s = sp.Symbol('s')
+    return sp.inverse_laplace_transform(expr, s, x)
+
+def empirical_formula(elements):
+    smallest = min(elements.values())
+    ratios = {k: round(v/smallest) for k,v in elements.items()}
+
+    result = ""
+    for el,count in ratios.items():
+        result += f"{el}{count if count>1 else ''}"
+
+    return result
+
+def fourier(expr):
+    return sp.fourier_transform(expr, x, sp.Symbol('k'))
+
+def inverse_fourier(expr):
+    k = sp.Symbol('k')
+    return sp.inverse_fourier_transform(expr, k, x)
 
 def harmonic_mean(data):
     return statistics.harmonic_mean(data)
@@ -2028,7 +2160,22 @@ def graph_many(*expressions):
 
     plt.show()
 
+def half_life(decay_constant):
+    return math.log(2) / decay_constant
 
+def activity(n, decay_constant):
+    return n * decay_constant
+
+def mass_defect(mass_parts, mass_nucleus):
+    return mass_parts - mass_nucleus
+
+def binding_energy(delta_m):
+    c = 299792458
+    return delta_m * c**2
+
+def q_value(m_before, m_after):
+    c = 299792458
+    return (m_before - m_after) * c**2
 
 def expand_full(expr):
     return sp.expand(sp.sympify(expr))
@@ -3133,6 +3280,47 @@ def caesar_encrypt(text, shift):
 def caesar_decrypt(text, shift):
     return caesar_encrypt(text, -shift)
 
+def present_value(fv, r, n):
+    return fv / ((1+r)**n)
+
+def future_value(pv, r, n):
+    return pv * ((1+r)**n)
+
+def npv(rate, cashflows):
+    return sum(
+        cf / ((1+rate)**i)
+        for i,cf in enumerate(cashflows)
+    )
+
+def quick_sort(arr):
+    if len(arr) <= 1:
+        return arr
+
+    pivot = arr[len(arr)//2]
+
+    left = [x for x in arr if x < pivot]
+    mid = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+
+    return quick_sort(left) + mid + quick_sort(right)
+
+def binary_search(arr, target):
+    low = 0
+    high = len(arr)-1
+
+    while low <= high:
+        mid = (low+high)//2
+
+        if arr[mid] == target:
+            return mid
+
+        if arr[mid] < target:
+            low = mid+1
+        else:
+            high = mid-1
+
+    return -1
+
 def tr(key):
     return languages.get(language, languages["en"]).get(key, key)
 
@@ -3163,6 +3351,16 @@ def set_language(lang):
 # =========================================================
 # ASCII GRAPH
 # =========================================================
+
+def coin_flip():
+    return random.choice(["Heads","Tails"])
+
+def rock_paper_scissors():
+    return random.choice([
+        "Rock",
+        "Paper",
+        "Scissors"
+    ])
 
 def ascii_plot(expr):
 
@@ -3277,16 +3475,19 @@ variables = {
     "e": sp.E,
 
     # ================= TRIG =================
-
+    "weight_to_atomic": weight_to_atomic,
+    "rule_of_mixtures": rule_of_mixtures,
+    "alloy_density": alloy_density,
     "set_language": set_language,
     "sin": sin_wrapper,
     "cos": cos_wrapper,
     "tan": tan_wrapper,
-
+    "haversine": haversine,
     "asin": sp.asin,
     "acos": sp.acos,
     "atan": sp.atan,
-
+    "coin_flip": coin_flip,
+    "rock_paper_scissors": rock_paper_scissors,
     "sec": sp.sec,
     "csc": sp.csc,
     "cot": sp.cot,
@@ -3303,7 +3504,8 @@ variables = {
     "sqrt": sp.sqrt,
     "log": sp.log,
     "ln": sp.log,
-
+    "quick_sort": quick_sort,
+    "binary_search": binary_search,
     "expand": sp.expand,
     "expand_full": expand_full,
 
@@ -3321,7 +3523,10 @@ variables = {
 
     "solve": sp.solve,
     "solvefor": solvefor,
-
+    "stress": stress,
+    "strain": strain,
+    "youngs_modulus": youngs_modulus,
+    "thermal_expansion": thermal_expansion,
     "nsolve": nsolve_equation,
 
     "is_equivalent": is_equivalent,
@@ -3334,7 +3539,12 @@ variables = {
 
     "integral": integral,
     "int": integral,
-
+    "transpose": transpose,
+    "rank": matrix_rank,
+    "jacobian": jacobian,
+    "qr": qr,
+    "lu": lu,
+    "projection": projection,
     "integrate": sp.integrate,
     "integral_def": definite_integral,
 
@@ -3342,6 +3552,14 @@ variables = {
     "taylor": taylor,
     "series_expansion": series_expansion,
 
+
+    "resistance": resistance,
+    "current": current,
+    "capacitance": capacitance,
+    "inductance": inductance,
+    "reactance": reactance,
+    "impedance": impedance,
+    "power_factor": power_factor,
     "gradient": gradient,
     "hessian": hessian_matrix,
 
@@ -3444,7 +3662,9 @@ variables = {
 
     "linreg": linear_regression,
     "polyfit": poly_fit,
-
+    "present_value": present_value,
+    "future_value": future_value,
+    "npv": npv,
     "probability": probability,
     "binomial_probability": binomial_probability,
 
@@ -3470,7 +3690,7 @@ variables = {
 
     "permutations": permutations,
     "combinations": combinations,
-
+    "empirical_formula": empirical_formula,
     "factorial": sp.factorial,
 
     # ================= COMPLEX =================
@@ -3651,7 +3871,11 @@ variables = {
 
     "vigenere_encrypt": vigenere_encrypt,
     "vigenere_decrypt": vigenere_decrypt,
-
+    "half_life": half_life,
+    "activity": activity,
+    "mass_defect": mass_defect,
+    "binding_energy": binding_energy,
+    "q_value": q_value,
     "base64_encode": base64_encode,
     "base64_decode": base64_decode,
 
@@ -3660,6 +3884,13 @@ variables = {
 
     # ================= UTILITIES =================
 
+    "orbital_period": orbital_period,
+    "luminosity": luminosity,
+    "redshift": redshift,
+    "distance_modulus": distance_modulus,
+    "hill_sphere": hill_sphere,
+    
+    
     "round": round,
     "abs": abs,
 
@@ -3683,6 +3914,11 @@ variables = {
 
     # ================= STOPWATCH =================
 
+
+    "laplace_transform": laplace_transform_expr,
+    "inverse_laplace": inverse_laplace,
+    "fourier_transform": fourier,
+    "inverse_fourier": inverse_fourier,
     "stopwatch_start": stopwatch_start,
     "stopwatch_stop": stopwatch_stop,
 
@@ -3726,7 +3962,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.5. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.6. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
