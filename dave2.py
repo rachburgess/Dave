@@ -163,6 +163,7 @@ atexit.register(readline.write_history_file, HISTORY_FILE)
 # MISSING FUNCTION DEFINITIONS
 # =========================================================
 
+from deep_translator import GoogleTranslator
 import sympy as sp
 import numpy as np
 import math
@@ -285,6 +286,12 @@ def velocity(distance, time):
 
 def acceleration(v1, v2, time):
     return (v2 - v1) / time
+
+def translate(text, target="es"):
+    return GoogleTranslator(
+        source="auto",
+        target=target
+    ).translate(text)
 
 def density(mass, volume):
     return mass / volume
@@ -3208,6 +3215,283 @@ Draw Card:
 draw_card()
 
 =========================================================
+======================== TRANSLATION ========================
+=========================================================
+
+Translate Text:
+translate("Hello world", "es")
+
+Translate To Current Language:
+translate("Good morning")
+
+Examples:
+translate("I like math", "fr")
+translate("How are you?", "de")
+translate("The cat is sleeping", "jp")
+
+Supported Languages:
+en = English
+es = Spanish
+fr = French
+de = German
+jp = Japanese
+it = Italian
+pt = Portuguese
+ru = Russian
+zh-cn = Chinese
+ar = Arabic
+hi = Hindi
+
+=========================================================
+======================== ASTRONOMY ========================
+=========================================================
+
+Orbital Period:
+orbital_period(1.496e11, 1.989e30)
+
+Luminosity:
+luminosity(6.96e8, 5778)
+
+Redshift:
+redshift(656.3, 700)
+
+Distance Modulus:
+distance_modulus(10, 5)
+
+Hill Sphere:
+hill_sphere(1.496e11, 5.97e24, 1.989e30)
+
+=========================================================
+======================== ELECTRONICS ========================
+=========================================================
+
+Resistance:
+resistance(12, 2)
+
+Current:
+current(12, 6)
+
+Capacitance:
+capacitance(0.001, 5)
+
+Inductance:
+inductance(12, 0.5)
+
+Reactance:
+reactance(60, 1e-6)
+
+Impedance:
+impedance(100, 50)
+
+Power Factor:
+power_factor(900, 1000)
+
+=========================================================
+======================== ADVANCED MATRIX ========================
+=========================================================
+
+Transpose:
+transpose([[1,2],[3,4]])
+
+Rank:
+rank([[1,2],[3,4]])
+
+Jacobian:
+jacobian([x**2+y, y**2+x], [x,y])
+
+QR Decomposition:
+qr([[1,2],[3,4]])
+
+LU Decomposition:
+lu([[1,2],[3,4]])
+
+Projection:
+projection([1,2,3], [1,0,0])
+
+=========================================================
+======================== TRANSFORMS ========================
+=========================================================
+
+Laplace Transform:
+laplace_transform(sin(x))
+
+Inverse Laplace:
+inverse_laplace(1/(s+1))
+
+Fourier Transform:
+fourier_transform(exp(-x**2))
+
+Inverse Fourier:
+inverse_fourier(expr)
+
+=========================================================
+======================== ADVANCED CHEMISTRY ========================
+=========================================================
+
+Empirical Formula:
+empirical_formula({
+    "C":40,
+    "H":6.7,
+    "O":53.3
+})
+
+=========================================================
+======================== NUCLEAR PHYSICS ========================
+=========================================================
+
+Half Life:
+half_life(0.693)
+
+Activity:
+activity(1000, 0.693)
+
+Mass Defect:
+mass_defect(1.008+1.008, 2.014)
+
+Binding Energy:
+binding_energy(1e-30)
+
+Q Value:
+q_value(10, 9.99)
+
+=========================================================
+======================== MATERIALS SCIENCE ========================
+=========================================================
+
+Alloy Density:
+alloy_density(
+    [7.87,8.96],
+    [0.5,0.5]
+)
+
+Rule of Mixtures:
+rule_of_mixtures(
+    [100,200],
+    [0.4,0.6]
+)
+
+Weight % To Atomic %:
+weight_to_atomic(
+    {"Fe":70,"Cr":30},
+    {"Fe":55.845,"Cr":51.996}
+)
+
+=========================================================
+======================== ENGINEERING ========================
+=========================================================
+
+Stress:
+stress(1000, 0.01)
+
+Strain:
+strain(0.001, 1)
+
+Young's Modulus:
+youngs_modulus(1e8, 0.001)
+
+Thermal Expansion:
+thermal_expansion(
+    1.2e-5,
+    10,
+    100
+)
+
+=========================================================
+======================== GEOGRAPHY ========================
+=========================================================
+
+Great Circle Distance:
+haversine(
+    40.7128,
+    -74.0060,
+    42.3601,
+    -71.0589
+)
+
+=========================================================
+======================== ADVANCED FINANCE ========================
+=========================================================
+
+Present Value:
+present_value(1000, 0.05, 10)
+
+Future Value:
+future_value(1000, 0.05, 10)
+
+Net Present Value:
+npv(
+    0.08,
+    [100,200,300,400]
+)
+
+=========================================================
+======================== COMPUTER SCIENCE ========================
+=========================================================
+
+Quick Sort:
+quick_sort([5,1,9,3,2])
+
+Binary Search:
+binary_search(
+    [1,2,3,4,5],
+    4
+)
+
+=========================================================
+======================== ADDITIONAL GAMES ========================
+=========================================================
+
+Coin Flip:
+coin_flip()
+
+Rock Paper Scissors:
+rock_paper_scissors()
+
+Guessing Game:
+start_guess_game(100)
+
+=========================================================
+======================== STOCK MARKET ========================
+=========================================================
+
+Stock Performance:
+stock("SPY")
+
+Current Price:
+stock_price("AAPL")
+
+Market Cap:
+market_cap("NVDA")
+
+P/E Ratio:
+pe_ratio("MSFT")
+
+Dividend Yield:
+dividend_yield("KO")
+
+Company Name:
+stock_name("GOOG")
+
+=========================================================
+======================== BASEBALL STATISTICS ========================
+=========================================================
+
+ERA:
+era(25,180)
+
+Batting Average:
+batting_average(150,500)
+
+On Base Percentage:
+obp(150,60,5,500,4)
+
+Slugging Percentage:
+slg(90,30,5,25,500)
+
+OPS:
+ops(0.520,0.380)
+
+=========================================================
 ======================== SPECIAL FEATURES ========================
 
 - symbolic algebra
@@ -3508,7 +3792,7 @@ variables = {
     "binary_search": binary_search,
     "expand": sp.expand,
     "expand_full": expand_full,
-
+    "translate": translate,
     "simplify": sp.simplify,
     "simplify_full": simplify_full,
 
