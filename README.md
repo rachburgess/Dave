@@ -48,6 +48,8 @@ pip3 install —-break-system-packages readline
 
 pip3 install —-break-system-packages pickle
 
+pip3 install --break-system-packages deep-translator
+
 pip3 install —-break-system-packages atextit
 
 pip3 install -—break-system-packages datetime
