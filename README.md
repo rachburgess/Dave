@@ -52,6 +52,8 @@ pip3 install --break-system-packages deep-translator
 
 pip3 install —-break-system-packages atextit
 
+pip3 install --break-system-packages mendeleev
+
 pip3 install -—break-system-packages datetime
 
 pip3 install -—break-system-packages re  
