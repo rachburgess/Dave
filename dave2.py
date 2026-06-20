@@ -4,6 +4,8 @@
 import sys
 sys.set_int_max_str_digits(0)
 
+from mendeleev import element
+
 # =========================================================
 # PYTHON VERSION CHECK
 # =========================================================
@@ -32,8 +34,8 @@ sys.set_int_max_str_digits(0)
 # =========================================================
 # AUTO INSTALL REQUIRED PACKAGES
 # =========================================================
-
-import yfinance as yf
+import scipy
+import sys
 import inspect
 import subprocess
 import importlib
@@ -48,6 +50,46 @@ required_packages = {
     "pandas": "pandas",
     "scipy": "scipy",
 }
+
+import re
+
+def limiting_reactant(reaction, available):
+
+    reactants = reaction.split("->")[0]
+
+    coeffs = {}
+
+    for part in reactants.split("+"):
+
+        part = part.strip()
+
+        m = re.match(r"(\d*)([A-Za-z0-9()]+)", part)
+
+        if m:
+
+            coeff = int(m.group(1)) if m.group(1) else 1
+            formula = m.group(2)
+
+            coeffs[formula] = coeff
+
+    ratios = {}
+
+    for species, coeff in coeffs.items():
+
+        if species not in available:
+            raise ValueError(
+                f"Missing amount for {species}"
+            )
+
+        ratios[species] = available[species] / coeff
+
+    limiting = min(ratios, key=ratios.get)
+
+    return {
+        "limiting_reactant": limiting,
+        "reaction_units": ratios
+    }
+
 
 def install_and_import(import_name, package_name=None):
 
@@ -90,7 +132,7 @@ print("Starting Dave...")
 
 import math
 
-import scipy
+import yfinance as yf
 import codecs
 import pandas as pd 
 import sympy as sp
@@ -113,6 +155,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import print
 
+from deep_translator import GoogleTranslator
 import statistics
 import random
 import readline
@@ -163,7 +206,6 @@ atexit.register(readline.write_history_file, HISTORY_FILE)
 # MISSING FUNCTION DEFINITIONS
 # =========================================================
 
-from deep_translator import GoogleTranslator
 import sympy as sp
 import numpy as np
 import math
@@ -176,6 +218,86 @@ def matrix_rank(A):
 
 def matrix_trace(A):
     return sp.Matrix(A).trace()
+
+def elem(symbol):
+    return element(symbol)
+
+def atomic_mass(symbol):
+    return element(symbol).atomic_weight
+
+def atomic_number(symbol):
+    return element(symbol).atomic_number
+
+def density_element(symbol):
+    return element(symbol).density
+
+def melting_point(symbol):
+    return element(symbol).melting_point
+
+def boiling_point(symbol):
+    return element(symbol).boiling_point
+
+def electron_configuration(symbol):
+    return str(element(symbol).ec)
+
+def electronegativity(symbol):
+    return element(symbol).en_pauling
+
+def atomic_radius(symbol):
+    return element(symbol).atomic_radius
+
+def covalent_radius(symbol):
+    return element(symbol).covalent_radius
+
+def oxidation_states(symbol):
+    e = element(symbol)
+
+    try:
+        return [o.oxidation_state for o in e.oxistates]
+    except:
+        return []
+
+def thermal_conductivity(symbol):
+    return element(symbol).thermal_conductivity
+
+def specific_heat(symbol):
+    return element(symbol).specific_heat
+
+def element_info(symbol):
+
+    e = element(symbol)
+
+    return {
+        "name": e.name,
+        "symbol": e.symbol,
+        "atomic_number": e.atomic_number,
+        "atomic_mass": e.atomic_weight,
+        "density": e.density,
+        "melting_point": e.melting_point,
+        "boiling_point": e.boiling_point,
+        "electron_configuration": str(e.ec),
+        "electronegativity": e.en_pauling,
+        "atomic_radius": e.atomic_radius,
+        "covalent_radius": e.covalent_radius,
+    }
+
+def find_element(name):
+
+    name = name.lower()
+
+    for z in range(1,119):
+
+        e = element(z)
+
+        if (
+            e.name.lower() == name
+            or e.symbol.lower() == name
+        ):
+            return e.symbol
+
+    return None
+
+
 
 def matrix_norm(A):
     return float(sp.Matrix(A).norm())
@@ -287,12 +409,6 @@ def velocity(distance, time):
 def acceleration(v1, v2, time):
     return (v2 - v1) / time
 
-def translate(text, target="es"):
-    return GoogleTranslator(
-        source="auto",
-        target=target
-    ).translate(text)
-
 def density(mass, volume):
     return mass / volume
 
@@ -318,6 +434,51 @@ def escape_velocity(M, R):
     G = 6.67430e-11
     return math.sqrt(2 * G * M / R)
 
+def era(earned_runs, innings_pitched):
+    return earned_runs * 9 / innings_pitched
+
+def batting_average(hits, at_bats):
+    return hits / at_bats
+
+def obp(hits, walks, hbp, at_bats, sac_flies):
+    return (hits + walks + hbp) / (at_bats + walks + hbp + sac_flies)
+
+def slg(singles, doubles, triples, home_runs, at_bats):
+    return (
+        singles +
+        2 * doubles +
+        3 * triples +
+        4 * home_runs
+    ) / at_bats
+
+def translate(text, target="es"):
+    return GoogleTranslator(
+        source="auto",
+        target=target
+    ).translate(text)
+
+def ops(singles, doubles, triples, home_runs,
+        hits, walks, hbp, at_bats, sac_flies):
+    return (
+        slg(singles, doubles, triples, home_runs, at_bats)
+        + obp(hits, walks, hbp, at_bats, sac_flies)
+    )
+
+def whip(walks, hits, innings):
+    return (walks + hits) / innings
+
+def k_per_9(strikeouts, innings):
+    return strikeouts * 9 / innings
+
+def bb_per_9(walks, innings):
+    return walks * 9 / innings
+
+def hr_per_9(home_runs, innings):
+    return home_runs * 9 / innings
+
+def fielding_percentage(putouts, assists, errors):
+    return (putouts + assists) / (putouts + assists + errors)
+
 def relativistic_ke(m, v):
     c = 299792458
     gamma = 1 / math.sqrt(1 - (v/c)**2)
@@ -329,32 +490,6 @@ def momentum_vector(mass, velocity_vector):
 def projectile_range(v, theta_deg, g=9.81):
     theta = math.radians(theta_deg)
     return (v**2 * math.sin(2*theta)) / g
-
-def gravity_force(m1, m2, r):
-    G = 6.67430e-11
-    return G * m1 * m2 / r**2
-
-def decay(N0, t, half_life):
-    return N0 * (0.5)**(t / half_life)
-
-def schwarzschild(mass):
-    G = 6.67430e-11
-    c = 299792458
-    return 2 * G * mass / c**2
-
-# ---------------- CHEMISTRY ----------------
-
-def moles(mass, molar_mass):
-    return mass / molar_mass
-
-def mass_from_moles(moles_value, molar_mass):
-    return moles_value * molar_mass
-
-def molecules(moles_value):
-    return moles_value * 6.02214076e23
-
-def matrix_transpose(A):
-    return np.array(A).T
 
 def stock_name(symbol):
     import yfinance as yf
@@ -375,71 +510,21 @@ def stock_name(symbol):
     except Exception as e:
         return f"Error: {e}"
 
-def matrix_rank(A):
-    return sp.Matrix(A).rank()
+def dividend_yield(symbol):
+    import yfinance as yf
 
-def matrix_trace(A):
-    return sp.Matrix(A).trace()
-
-def matrix_norm(A):
-    return float(sp.Matrix(A).norm())
-
-def matrix_rref(A):
-    return sp.Matrix(A).rref()[0]
-
-def matrix_nullspace(A):
-    return sp.Matrix(A).nullspace()
-
-
-def stock(symbol):
     try:
-        ticker = yf.Ticker(symbol.upper())
-        df = ticker.history(period="max")
+        info = yf.Ticker(symbol.upper()).info
 
-        if df.empty:
-            return f"No data found for {symbol}"
+        dy = info.get("dividendYield")
 
-        current_price = df["Close"].iloc[-1]
+        if dy is None:
+            return 0.0
 
-        output = []
-        output.append(f"{symbol.upper()} Stock Performance")
-        output.append(f"Current Price: ${current_price:.2f}")
-
-        periods = {
-            "1 Day": 1,
-            "1 Week": 5,
-            "1 Month": 21,
-            "1 Year": 252,
-            "5 Years": 252 * 5,
-            "Max Time": len(df) - 1
-        }
-
-        for period_name, offset in periods.items():
-            if len(df) > offset:
-                past_price = df["Close"].iloc[-(offset + 1)]
-                change = current_price - past_price
-                pct = (change / past_price) * 100
-
-                output.append(
-                    f"{period_name}: {change:+.2f} ({pct:+.2f}%)"
-                )
-
-        return "\n".join(output)
+        return float(dy) * 100  # return as percentage
 
     except Exception as e:
         return f"Error: {e}"
-
-def matrix_columnspace(A):
-    return sp.Matrix(A).columnspace()
-
-def matrix_rowspace(A):
-    return sp.Matrix(A).rowspace()
-
-def characteristic_polynomial(A):
-    return sp.Matrix(A).charpoly().as_expr()
-
-def molarity(moles_value, liters):
-    return moles_value / liters
 
 def market_cap(symbol):
     import yfinance as yf
@@ -447,26 +532,13 @@ def market_cap(symbol):
     info = yf.Ticker(symbol).info
     return float(info["marketCap"])
 
-def orbital_period(radius, central_mass):
-    G = 6.67430e-11
-    return 2 * math.pi * math.sqrt(radius**3 / (G * central_mass))
+def stock_price(symbol):
+    import yfinance as yf
 
-def luminosity(radius, temperature):
-    sigma = 5.670374419e-8
-    return 4 * math.pi * radius**2 * sigma * temperature**4
+    ticker = yf.Ticker(symbol.upper())
+    info = ticker.info
 
-def redshift(emitted, observed):
-    return (observed - emitted) / emitted
-
-def distance_modulus(apparent_mag, absolute_mag):
-    return 10 ** ((apparent_mag - absolute_mag + 5) / 5)
-
-def hill_sphere(a, m, M):
-    return a * (m / (3 * M)) ** (1/3)
-
-def ideal_gas_volume(n, T, P):
-    R = 0.082057
-    return n * R * T / P
+    return float(info["currentPrice"])
 
 def stock_metrics(ticker_symbol):
     try:
@@ -518,80 +590,78 @@ def stock_metrics(ticker_symbol):
     except Exception as e:
         return f"Stock error: {e}"
 
-def ideal_gas_pressure(n, T, V):
-    R = 0.082057
-    return n * R * T / V
+def gravity_force(m1, m2, r):
+    G = 6.67430e-11
+    return G * m1 * m2 / r**2
 
-def ideal_gas_temperature(P, V, n):
-    R = 0.082057
-    return P * V / (n * R)
+def orbital_period(radius, central_mass):
+    G = 6.67430e-11
+    return 2 * math.pi * math.sqrt(radius**3 / (G * central_mass))
 
-def ideal_gas_moles(P, V, T):
-    R = 0.082057
-    return P * V / (R * T)
+def luminosity(radius, temperature):
+    sigma = 5.670374419e-8
+    return 4 * math.pi * radius**2 * sigma * temperature**4
 
-def protons(Z):
-    return Z
+def redshift(emitted, observed):
+    return (observed - emitted) / emitted
 
-def electrons(Z):
-    return Z
+def distance_modulus(apparent_mag, absolute_mag):
+    return 10 ** ((apparent_mag - absolute_mag + 5) / 5)
 
-def neutrons(A, Z):
-    return A - Z
+def hill_sphere(a, m, M):
+    return a * (m / (3 * M)) ** (1/3)
 
-def pe_ratio(symbol):
-    import yfinance as yf
+def decay(N0, t, half_life):
+    return N0 * (0.5)**(t / half_life)
 
+def schwarzschild(mass):
+    G = 6.67430e-11
+    c = 299792458
+    return 2 * G * mass / c**2
+
+
+def stock(symbol):
     try:
-        pe = yf.Ticker(symbol).info.get("trailingPE")
+        ticker = yf.Ticker(symbol.upper())
+        df = ticker.history(period="max")
 
-        if pe is None:
-            return "No P/E ratio available"
+        if df.empty:
+            return f"No data found for {symbol}"
 
-        return float(pe)
+        current_price = df["Close"].iloc[-1]
+
+        output = []
+        output.append(f"{symbol.upper()} Stock Performance")
+        output.append(f"Current Price: ${current_price:.2f}")
+
+        periods = {
+            "1 Day": 1,
+            "1 Week": 5,
+            "1 Month": 21,
+            "1 Year": 252,
+            "5 Years": 252 * 5,
+            "Max Time": len(df) - 1
+        }
+
+        for period_name, offset in periods.items():
+            if len(df) > offset:
+                past_price = df["Close"].iloc[-(offset + 1)]
+                change = current_price - past_price
+                pct = (change / past_price) * 100
+
+                output.append(
+                    f"{period_name}: {change:+.2f} ({pct:+.2f}%)"
+                )
+
+        return "\n".join(output)
 
     except Exception as e:
         return f"Error: {e}"
 
-def ph(H):
-    return -math.log10(H)
+# ---------------- CHEMISTRY ----------------
 
-# ---------------- CHEMISTRY CONSTANTS ----------------
-
-electron_mass = 9.1093837015e-31
-proton_mass = 1.67262192369e-27
-neutron_mass = 1.67492749804e-27
-
-R = 8.314462618
-F = 96485.33212
-
-# ---------------- CALCULUS ----------------
-
-def newton(expr, var, guess):
-    return sp.nsolve(expr, var, guess)
-
-def series_expansion(expr, var, point=0, order=6):
-    return sp.series(expr, var, point, order)
-
-# ---------------- NUMBER THEORY ----------------
-
-def factor_list(n):
-    return [i for i in range(1, n+1) if n % i == 0]
-
-def largest_prime_factor(n):
-    factors = sp.factorint(n)
-    return max(factors.keys())
-
-def stock_price(symbol):
-    import yfinance as yf
-
-    ticker = yf.Ticker(symbol.upper())
-    info = ticker.info
-
-    return float(info["currentPrice"])
-
-def totient(n):
-    return sp.totient(n)
+def moles(mass, molar_mass):
+    return mass / molar_mass
 
 import random
 
@@ -679,6 +749,132 @@ def game_status():
         return "No active game."
 
     return f"Active game: guessing between 1 and {current_maximum}."
+
+def mass_from_moles(moles_value, molar_mass):
+    return moles_value * molar_mass
+
+def molecules(moles_value):
+    return moles_value * 6.02214076e23
+
+def matrix_transpose(A):
+    return np.array(A).T
+
+def matrix_rank(A):
+    return sp.Matrix(A).rank()
+
+def matrix_trace(A):
+    return sp.Matrix(A).trace()
+
+def matrix_norm(A):
+    return float(sp.Matrix(A).norm())
+
+def matrix_rref(A):
+    return sp.Matrix(A).rref()[0]
+
+def matrix_nullspace(A):
+    return sp.Matrix(A).nullspace()
+
+def matrix_columnspace(A):
+    return sp.Matrix(A).columnspace()
+
+def matrix_rowspace(A):
+    return sp.Matrix(A).rowspace()
+
+def characteristic_polynomial(A):
+    return sp.Matrix(A).charpoly().as_expr()
+
+def pe_ratio(symbol):
+    import yfinance as yf
+
+    try:
+        pe = yf.Ticker(symbol).info.get("trailingPE")
+
+        if pe is None:
+            return "No P/E ratio available"
+
+        return float(pe)
+
+    except Exception as e:
+        return f"Error: {e}"
+
+def molarity(moles_value, liters):
+    return moles_value / liters
+
+def ideal_gas_volume(n, T, P):
+    R = 0.082057
+    return n * R * T / P
+
+def ideal_gas_pressure(n, T, V):
+    R = 0.082057
+    return n * R * T / V
+
+def ideal_gas_temperature(P, V, n):
+    R = 0.082057
+    return P * V / (n * R)
+
+def ideal_gas_moles(P, V, T):
+    R = 0.082057
+    return P * V / (R * T)
+
+def quadratic(a,b,c):
+    x = sp.Symbol('x')
+    return sp.solve(a*x**2+b*x+c)
+
+def linear(a,b):
+    x = sp.Symbol('x')
+    return sp.solve(a*x+b)
+
+def cubic(a,b,c,d):
+    x = sp.Symbol('x')
+    return sp.solve(a*x**3+b*x**2+c*x+d)
+
+def protons(Z):
+    return Z
+
+
+def density_material(name):
+    return materials[name.lower()]["density"]
+
+def youngs_modulus_material(name):
+    return materials[name.lower()]["youngs_modulus"]
+
+def electrons(Z):
+    return Z
+
+def neutrons(A, Z):
+    return A - Z
+
+def ph(H):
+    return -math.log10(H)
+
+# ---------------- CHEMISTRY CONSTANTS ----------------
+
+electron_mass = 9.1093837015e-31
+proton_mass = 1.67262192369e-27
+neutron_mass = 1.67492749804e-27
+
+R = 8.314462618
+F = 96485.33212
+
+# ---------------- CALCULUS ----------------
+
+def newton(expr, var, guess):
+    return sp.nsolve(expr, var, guess)
+
+def series_expansion(expr, var, point=0, order=6):
+    return sp.series(expr, var, point, order)
+
+# ---------------- NUMBER THEORY ----------------
+
+def factor_list(n):
+    return [i for i in range(1, n+1) if n % i == 0]
+
+def largest_prime_factor(n):
+    factors = sp.factorint(n)
+    return max(factors.keys())
+
+def totient(n):
+    return sp.totient(n)
 
 def decimal(x):
     return float(x)
@@ -785,45 +981,6 @@ def circle_area(r):
 
 def parse_list(s):
     return list(map(float, s.split(",")))
-
-def era(earned_runs, innings_pitched):
-    return earned_runs * 9 / innings_pitched
-
-def batting_average(hits, at_bats):
-    return hits / at_bats
-
-def obp(hits, walks, hbp, at_bats, sac_flies):
-    return (hits + walks + hbp) / (at_bats + walks + hbp + sac_flies)
-
-def slg(singles, doubles, triples, home_runs, at_bats):
-    return (
-        singles +
-        2 * doubles +
-        3 * triples +
-        4 * home_runs
-    ) / at_bats
-
-def ops(singles, doubles, triples, home_runs,
-        hits, walks, hbp, at_bats, sac_flies):
-    return (
-        slg(singles, doubles, triples, home_runs, at_bats)
-        + obp(hits, walks, hbp, at_bats, sac_flies)
-    )
-
-def whip(walks, hits, innings):
-    return (walks + hits) / innings
-
-def k_per_9(strikeouts, innings):
-    return strikeouts * 9 / innings
-
-def bb_per_9(walks, innings):
-    return walks * 9 / innings
-
-def hr_per_9(home_runs, innings):
-    return home_runs * 9 / innings
-
-def fielding_percentage(putouts, assists, errors):
-    return (putouts + assists) / (putouts + assists + errors)
 
 def sphere_volume(r):
     return (4/3) * math.pi * r**3
@@ -1577,25 +1734,6 @@ def polar_complex(r, theta):
         r * math.sin(theta)
     )
 
-def weight_to_atomic(weight_percent, atomic_weights):
-    moles = {}
-
-    for e,w in weight_percent.items():
-        moles[e] = w / atomic_weights[e]
-
-    total = sum(moles.values())
-
-    return {
-        e:100*m/total
-        for e,m in moles.items()
-    }
-
-def rule_of_mixtures(values, fractions):
-    return sum(v*f for v,f in zip(values,fractions))
-
-def alloy_density(densities, fractions):
-    return 1 / sum(f/d for d,f in zip(densities,fractions))
-
 def convert(value, from_unit, to_unit):
 
     value = float(value)
@@ -1729,26 +1867,6 @@ def solve_quadratic(a, b, c):
 
     return [r1, r2]
 
-def resistance(v, i):
-    return v / i
-
-def current(v, r):
-    return v / r
-
-def capacitance(q, v):
-    return q / v
-
-def inductance(v, di_dt):
-    return v / di_dt
-
-def reactance(f, c):
-    return 1 / (2 * math.pi * f * c)
-
-def impedance(r, x):
-    return math.sqrt(r**2 + x**2)
-
-def power_factor(real_power, apparent_power):
-    return real_power / apparent_power
 
 def solve_cubic(expr):
     return sp.solve(sp.sympify(expr), x)
@@ -1850,6 +1968,53 @@ def choice(lst):
 def roots(expr):
     return sp.solve(sp.sympify(expr), x)
 
+def formula(name):
+
+    return formulas.get(
+        name.lower(),
+        "Formula not found."
+    )
+
+def find_formula(text):
+
+    text = text.lower()
+
+    return [
+        k for k in formulas
+        if text in k
+    ]
+
+formula_categories = {
+
+    "physics":[
+        "newton",
+        "kinetic energy",
+        "potential energy",
+        "momentum"
+    ],
+
+    "chemistry":[
+        "ideal gas law",
+        "molarity",
+        "ph"
+    ],
+
+    "nuclear":[
+        "half life",
+        "activity",
+        "radioactive decay"
+    ]
+}
+
+def formulas_in(category):
+
+    return formula_categories.get(
+        category.lower(),
+        []
+    )
+
+
+
 def data_range(data):
     return max(data) - min(data)
 
@@ -1945,6 +2110,459 @@ def escape_velocity(mass, radius):
         (2 * G * mass) / radius
     )
 
+def resistance(v, i):
+    return v / i
+
+def current(v, r):
+    return v / r
+
+def capacitance(q, v):
+    return q / v
+
+formulas = {
+
+    # =========================
+    # PHYSICS
+    # =========================
+
+    "newton":
+        "F = m*a",
+
+    "kinetic energy":
+        "KE = 1/2*m*v^2",
+
+    "potential energy":
+        "PE = m*g*h",
+
+    "momentum":
+        "p = m*v",
+
+    "power":
+        "P = W/t",
+
+    "work":
+        "W = F*d",
+
+    "ohms law":
+        "V = I*R",
+
+    "coulombs law":
+        "F = k*q1*q2/r^2",
+
+    "mass energy":
+        "E = m*c^2",
+
+    "gravitational force":
+        "F = G*m1*m2/r^2",
+
+    "density":
+        "ρ = m/V",
+
+    "pressure":
+        "P = F/A",
+
+    "wave speed":
+        "v = f*λ",
+
+    "frequency":
+        "f = 1/T",
+
+    "escape velocity":
+        "v = sqrt(2GM/r)",
+
+    # =========================
+    # CHEMISTRY
+    # =========================
+
+    "ideal gas law":
+        "PV = nRT",
+
+    "molarity":
+        "M = moles/L",
+
+    "moles":
+        "n = mass/MM",
+
+    "percent yield":
+        "%Yield = actual/theoretical * 100",
+
+    "ph":
+        "pH = -log[H+]",
+
+    "poh":
+        "pOH = -log[OH-]",
+
+    "gibbs":
+        "ΔG = ΔH - TΔS",
+
+    "avogadro":
+        "N = n*Na",
+
+    "dilution":
+        "M1V1 = M2V2",
+
+    # =========================
+    # CALCULUS
+    # =========================
+
+    "power rule":
+        "d/dx(x^n)=n*x^(n-1)",
+
+    "product rule":
+        "(fg)' = f'g + fg'",
+
+    "quotient rule":
+        "(f/g)'=(f'g-fg')/g^2",
+
+    "chain rule":
+        "(f(g(x)))'=f'(g(x))*g'(x)",
+
+    "integration by parts":
+        "∫u dv = uv - ∫v du",
+
+    # =========================
+    # GEOMETRY
+    # =========================
+
+    "circle area":
+        "A = πr²",
+
+    "circle circumference":
+        "C = 2πr",
+
+    "sphere volume":
+        "V = 4/3 πr³",
+
+    "sphere area":
+        "A = 4πr²",
+
+    "cylinder volume":
+        "V = πr²h",
+
+    "cone volume":
+        "V = 1/3 πr²h",
+
+    "pythagorean":
+        "a²+b²=c²",
+
+    # =========================
+    # STATISTICS
+    # =========================
+
+    "mean":
+        "μ = Σx/n",
+
+    "variance":
+        "σ² = Σ(x-μ)²/n",
+
+    "standard deviation":
+        "σ = sqrt(variance)",
+
+    "z score":
+        "z=(x-μ)/σ",
+
+    "correlation":
+        "r = cov(x,y)/(σxσy)",
+
+    # =========================
+    # FINANCE
+    # =========================
+
+    "simple interest":
+        "I = P*r*t",
+
+    "compound interest":
+        "A=P(1+r/n)^(nt)",
+
+    "loan payment":
+        "M=P[r(1+r)^n]/[(1+r)^n-1]",
+
+    "roi":
+        "ROI=(Gain-Cost)/Cost*100",
+
+    # =========================
+    # NUCLEAR
+    # =========================
+
+    "radioactive decay":
+        "N=N0*e^(-λt)",
+
+    "activity":
+        "A=λN",
+
+    "half life":
+        "t1/2=ln(2)/λ",
+
+    "binding energy":
+        "E=Δmc²",
+
+    # =========================
+    # MATERIALS
+    # =========================
+
+    "rule of mixtures":
+        "P=Σ(Vi*Pi)",
+
+    "thermal expansion":
+        "ΔL=αLΔT",
+
+    "stress":
+        "σ=F/A",
+
+    "strain":
+        "ε=ΔL/L",
+
+    "young modulus":
+        "E=σ/ε",
+
+    "hardness ratio":
+        "H≈3σy"
+}
+
+materials = {
+
+    # =========================
+    # PURE METALS
+    # =========================
+
+    "aluminum": {
+        "density": 2700,
+        "youngs_modulus": 69e9,
+        "melting_point": 933,
+        "thermal_conductivity": 237,
+        "electrical_resistivity": 2.65e-8
+    },
+
+    "copper": {
+        "density": 8960,
+        "youngs_modulus": 117e9,
+        "melting_point": 1357,
+        "thermal_conductivity": 401,
+        "electrical_resistivity": 1.68e-8
+    },
+
+    "silver": {
+        "density": 10490,
+        "youngs_modulus": 83e9,
+        "melting_point": 1235,
+        "thermal_conductivity": 429,
+        "electrical_resistivity": 1.59e-8
+    },
+
+    "gold": {
+        "density": 19320,
+        "youngs_modulus": 79e9,
+        "melting_point": 1337,
+        "thermal_conductivity": 318,
+        "electrical_resistivity": 2.44e-8
+    },
+
+    "iron": {
+        "density": 7870,
+        "youngs_modulus": 211e9,
+        "melting_point": 1811,
+        "thermal_conductivity": 80,
+        "electrical_resistivity": 9.7e-8
+    },
+
+    "nickel": {
+        "density": 8908,
+        "youngs_modulus": 200e9,
+        "melting_point": 1728,
+        "thermal_conductivity": 91,
+        "electrical_resistivity": 6.9e-8
+    },
+
+    "titanium": {
+        "density": 4506,
+        "youngs_modulus": 116e9,
+        "melting_point": 1941,
+        "thermal_conductivity": 21.9,
+        "electrical_resistivity": 4.2e-7
+    },
+
+    "tungsten": {
+        "density": 19250,
+        "youngs_modulus": 411e9,
+        "melting_point": 3695,
+        "thermal_conductivity": 173,
+        "electrical_resistivity": 5.6e-8
+    },
+
+    "molybdenum": {
+        "density": 10280,
+        "youngs_modulus": 329e9,
+        "melting_point": 2896,
+        "thermal_conductivity": 138,
+        "electrical_resistivity": 5.3e-8
+    },
+
+    "chromium": {
+        "density": 7190,
+        "youngs_modulus": 279e9,
+        "melting_point": 2180,
+        "thermal_conductivity": 94,
+        "electrical_resistivity": 1.25e-7
+    },
+
+    # =========================
+    # STAINLESS STEELS
+    # =========================
+
+    "304 stainless": {
+        "density": 8000,
+        "youngs_modulus": 193e9,
+        "yield_strength": 215e6,
+        "thermal_conductivity": 16.2
+    },
+
+    "316 stainless": {
+        "density": 8000,
+        "youngs_modulus": 193e9,
+        "yield_strength": 290e6,
+        "thermal_conductivity": 16.3
+    },
+
+    # =========================
+    # TOOL STEELS
+    # =========================
+
+    "d2 steel": {
+        "density": 7700,
+        "hardness_hrc": 60,
+        "youngs_modulus": 210e9
+    },
+
+    "m2 steel": {
+        "density": 8160,
+        "hardness_hrc": 65,
+        "youngs_modulus": 210e9
+    },
+
+    # =========================
+    # SUPERALLOYS
+    # =========================
+
+    "inconel 718": {
+        "density": 8190,
+        "youngs_modulus": 200e9,
+        "yield_strength": 1030e6,
+        "max_service_temp": 973
+    },
+
+    "hastelloy c276": {
+        "density": 8890,
+        "youngs_modulus": 205e9,
+        "yield_strength": 355e6
+    },
+
+    # =========================
+    # CERAMICS
+    # =========================
+
+    "alumina": {
+        "density": 3950,
+        "youngs_modulus": 380e9,
+        "melting_point": 2327
+    },
+
+    "silicon carbide": {
+        "density": 3210,
+        "youngs_modulus": 450e9,
+        "thermal_conductivity": 120
+    },
+
+    "tungsten carbide": {
+        "density": 15630,
+        "youngs_modulus": 550e9,
+        "hardness_gpa": 25
+    },
+
+    # =========================
+    # SEMICONDUCTORS
+    # =========================
+
+    "silicon": {
+        "density": 2330,
+        "youngs_modulus": 130e9,
+        "band_gap": 1.12
+    },
+
+    "gallium arsenide": {
+        "density": 5320,
+        "youngs_modulus": 85e9,
+        "band_gap": 1.42
+    },
+
+    # =========================
+    # CARBON MATERIALS
+    # =========================
+
+    "graphite": {
+        "density": 2260,
+        "youngs_modulus": 15e9,
+        "thermal_conductivity": 150
+    },
+
+    "diamond": {
+        "density": 3510,
+        "youngs_modulus": 1200e9,
+        "thermal_conductivity": 2200
+    },
+
+    "graphene": {
+        "density": 2200,
+        "youngs_modulus": 1000e9,
+        "thermal_conductivity": 5000
+    },
+
+    # =========================
+    # POLYMERS
+    # =========================
+
+    "polyethylene": {
+        "density": 950,
+        "youngs_modulus": 0.8e9
+    },
+
+    "ptfe": {
+        "density": 2200,
+        "youngs_modulus": 0.5e9
+    },
+
+    "peek": {
+        "density": 1320,
+        "youngs_modulus": 3.6e9
+    }
+}
+
+def material_info(name):
+    return materials.get(name.lower(), "Material not found")
+
+def density_material(name):
+    return materials[name.lower()]["density"]
+
+def youngs_modulus_material(name):
+    return materials[name.lower()]["youngs_modulus"]
+
+def melting_material(name):
+    return materials[name.lower()].get("melting_point")
+
+def thermal_conductivity_material(name):
+    return materials[name.lower()].get("thermal_conductivity")
+
+def inductance(v, di_dt):
+    return v / di_dt
+
+def reactance(f, c):
+    return 1 / (2 * math.pi * f * c)
+
+def impedance(r, x):
+    return math.sqrt(r**2 + x**2)
+
+def power_factor(real_power, apparent_power):
+    return real_power / apparent_power
+
 def matrix_norm(m):
     return float(
         np.linalg.norm(
@@ -1954,42 +2572,6 @@ def matrix_norm(m):
 
 def matrix_rref(m):
     return sp.Matrix(m).rref()[0]
-
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371
-
-    lat1,lon1,lat2,lon2 = map(
-        math.radians,
-        [lat1,lon1,lat2,lon2]
-    )
-
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-
-    a = (
-        math.sin(dlat/2)**2 +
-        math.cos(lat1) *
-        math.cos(lat2) *
-        math.sin(dlon/2)**2
-    )
-
-    return 2 * R * math.asin(math.sqrt(a))
-
-def dividend_yield(symbol):
-    import yfinance as yf
-
-    try:
-        info = yf.Ticker(symbol.upper()).info
-
-        dy = info.get("dividendYield")
-
-        if dy is None:
-            return 0.0
-
-        return float(dy) * 100  # return as percentage
-
-    except Exception as e:
-        return f"Error: {e}"
 
 def matrix_columnspace(m):
     return sp.Matrix(m).columnspace()
@@ -2019,17 +2601,76 @@ def iqr(data):
         np.percentile(data,25)
     )
 
-def stress(force, area):
-    return force / area
+def laplace_transform_expr(expr):
+    return sp.laplace_transform(expr, x, sp.Symbol('s'))
 
-def strain(delta_length, original_length):
-    return delta_length / original_length
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371
 
-def youngs_modulus(stress_value, strain_value):
-    return stress_value / strain_value
+    lat1,lon1,lat2,lon2 = map(
+        math.radians,
+        [lat1,lon1,lat2,lon2]
+    )
 
-def thermal_expansion(alpha, length, delta_t):
-    return alpha * length * delta_t
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = (
+        math.sin(dlat/2)**2 +
+        math.cos(lat1) *
+        math.cos(lat2) *
+        math.sin(dlon/2)**2
+    )
+
+    return 2 * R * math.asin(math.sqrt(a))
+
+def inverse_laplace(expr):
+    s = sp.Symbol('s')
+    return sp.inverse_laplace_transform(expr, s, x)
+
+def fourier(expr):
+    return sp.fourier_transform(expr, x, sp.Symbol('k'))
+
+def inverse_fourier(expr):
+    k = sp.Symbol('k')
+    return sp.inverse_fourier_transform(expr, k, x)
+
+def transpose(m):
+    return sp.Matrix(m).T
+
+def matrix_rank(m):
+    return sp.Matrix(m).rank()
+
+def jacobian(funcs, vars):
+    return sp.Matrix(funcs).jacobian(vars)
+
+def qr(m):
+    return sp.Matrix(m).QRdecomposition()
+
+def half_life(decay_constant):
+    return math.log(2) / decay_constant
+
+def activity(n, decay_constant):
+    return n * decay_constant
+
+def mass_defect(mass_parts, mass_nucleus):
+    return mass_parts - mass_nucleus
+
+def binding_energy(delta_m):
+    c = 299792458
+    return delta_m * c**2
+
+def q_value(m_before, m_after):
+    c = 299792458
+    return (m_before - m_after) * c**2
+
+def lu(m):
+    return sp.Matrix(m).LUdecomposition()
+
+def projection(v, onto):
+    v = sp.Matrix(v)
+    onto = sp.Matrix(onto)
+    return (v.dot(onto) / onto.dot(onto)) * onto
 
 def skewness(data):
 
@@ -2044,6 +2685,47 @@ def skewness(data):
     return np.sum(
         ((arr-mean)/std)**3
     ) / n
+
+def empirical_formula(elements):
+    smallest = min(elements.values())
+    ratios = {k: round(v/smallest) for k,v in elements.items()}
+
+    result = ""
+    for el,count in ratios.items():
+        result += f"{el}{count if count>1 else ''}"
+
+    return result
+
+def weight_to_atomic(weight_percent, atomic_weights):
+    moles = {}
+
+    for e,w in weight_percent.items():
+        moles[e] = w / atomic_weights[e]
+
+    total = sum(moles.values())
+
+    return {
+        e:100*m/total
+        for e,m in moles.items()
+    }
+
+def rule_of_mixtures(values, fractions):
+    return sum(v*f for v,f in zip(values,fractions))
+
+def alloy_density(densities, fractions):
+    return 1 / sum(f/d for d,f in zip(densities,fractions))
+
+def stress(force, area):
+    return force / area
+
+def strain(delta_length, original_length):
+    return delta_length / original_length
+
+def youngs_modulus(stress_value, strain_value):
+    return stress_value / strain_value
+
+def thermal_expansion(alpha, length, delta_t):
+    return alpha * length * delta_t
 
 def kurtosis(data):
 
@@ -2061,52 +2743,214 @@ def kurtosis(data):
         ) / n
     ) - 3
 
-def transpose(m):
-    return sp.Matrix(m).T
+def present_value(fv, r, n):
+    return fv / ((1+r)**n)
 
-def matrix_rank(m):
-    return sp.Matrix(m).rank()
+def future_value(pv, r, n):
+    return pv * ((1+r)**n)
 
-def jacobian(funcs, vars):
-    return sp.Matrix(funcs).jacobian(vars)
+def npv(rate, cashflows):
+    return sum(
+        cf / ((1+rate)**i)
+        for i,cf in enumerate(cashflows)
+    )
 
-def qr(m):
-    return sp.Matrix(m).QRdecomposition()
+import re
 
-def lu(m):
-    return sp.Matrix(m).LUdecomposition()
+def element_count(formula):
 
-def projection(v, onto):
-    v = sp.Matrix(v)
-    onto = sp.Matrix(onto)
-    return (v.dot(onto) / onto.dot(onto)) * onto
+    matches = re.findall(
+        r'([A-Z][a-z]?)(\d*)',
+        formula
+    )
 
-def geometric_mean(data):
-    return statistics.geometric_mean(data)
+    result = {}
 
-def laplace_transform_expr(expr):
-    return sp.laplace_transform(expr, x, sp.Symbol('s'))
+    for element, count in matches:
 
-def inverse_laplace(expr):
-    s = sp.Symbol('s')
-    return sp.inverse_laplace_transform(expr, s, x)
+        count = int(count) if count else 1
 
-def empirical_formula(elements):
-    smallest = min(elements.values())
-    ratios = {k: round(v/smallest) for k,v in elements.items()}
-
-    result = ""
-    for el,count in ratios.items():
-        result += f"{el}{count if count>1 else ''}"
+        result[element] = (
+            result.get(element,0)
+            + count
+        )
 
     return result
 
-def fourier(expr):
-    return sp.fourier_transform(expr, x, sp.Symbol('k'))
+def percent_composition(formula):
 
-def inverse_fourier(expr):
-    k = sp.Symbol('k')
-    return sp.inverse_fourier_transform(expr, k, x)
+    counts = element_count(formula)
+
+    total = molar_mass(formula)
+
+    result = {}
+
+    for e,n in counts.items():
+
+        result[e] = (
+            atomic_mass(e)*n
+            / total
+            *100
+        )
+
+    return result
+
+from math import gcd
+from functools import reduce
+
+def empirical_formula(counts):
+
+    g = reduce(gcd, counts.values())
+
+    result = ""
+
+    for e,n in counts.items():
+
+        n//=g
+
+        result += e
+
+        if n>1:
+            result += str(n)
+
+    return result
+
+def molecular_formula(empirical, multiplier):
+
+    counts = element_count(empirical)
+
+    result = ""
+
+    for e,n in counts.items():
+
+        n*=multiplier
+
+        result += e
+
+        if n>1:
+            result += str(n)
+
+    return result
+
+oxidation_rules = {
+
+    "F":-1,
+    "O":-2,
+    "H":1,
+    "Li":1,
+    "Na":1,
+    "K":1,
+    "Mg":2,
+    "Ca":2
+}
+
+def oxidation_lookup(element):
+
+    return oxidation_rules.get(
+        element,
+        "variable"
+    )
+
+def parse_reaction(reaction):
+
+    left,right = reaction.split("->")
+
+    reactants = [
+        x.strip()
+        for x in left.split("+")
+    ]
+
+    products = [
+        x.strip()
+        for x in right.split("+")
+    ]
+
+    return reactants,products
+
+import sympy as sp
+
+def balance(reaction):
+
+    reactants,products = parse_reaction(
+        reaction
+    )
+
+    # build atom matrix
+
+    # solve nullspace
+
+    # return balanced equation
+
+def moles_from_mass(
+    formula,
+    mass
+):
+
+    return (
+        mass /
+        molar_mass(formula)
+    )
+
+limiting_reactant(
+    "2H2 + O2 -> 2H2O",
+    {
+        "H2":4,
+        "O2":1
+    }
+)
+
+def theoretical_yield(
+    product_mm,
+    product_moles
+):
+
+    return (
+        product_mm
+        * product_moles
+    )
+
+def ideal_gas_pressure(
+    n,T,V
+):
+    return n*R*T/V
+
+def molarity(
+    moles,
+    liters
+):
+    return moles/liters
+
+def dilution(
+    M1,V1,M2
+):
+    return M1*V1/M2
+
+def heat(
+    mass,
+    specific_heat,
+    delta_T
+):
+    return (
+        mass
+        * specific_heat
+        * delta_T
+    )
+
+def activity(
+    N,
+    decay_constant
+):
+    return N*decay_constant
+
+def half_life(
+    decay_constant
+):
+    return math.log(2)/decay_constant
+
+
+
+def geometric_mean(data):
+    return statistics.geometric_mean(data)
 
 def harmonic_mean(data):
     return statistics.harmonic_mean(data)
@@ -2167,22 +3011,7 @@ def graph_many(*expressions):
 
     plt.show()
 
-def half_life(decay_constant):
-    return math.log(2) / decay_constant
 
-def activity(n, decay_constant):
-    return n * decay_constant
-
-def mass_defect(mass_parts, mass_nucleus):
-    return mass_parts - mass_nucleus
-
-def binding_energy(delta_m):
-    c = 299792458
-    return delta_m * c**2
-
-def q_value(m_before, m_after):
-    c = 299792458
-    return (m_before - m_after) * c**2
 
 def expand_full(expr):
     return sp.expand(sp.sympify(expr))
@@ -2247,6 +3076,7 @@ def piecewise(*args):
 def show_help():
 
     help_text = """
+
 =========================================================
 DAVE PRO MAX — COMPLETE EXPANDED HELP LIST
 =========================================================
@@ -2913,29 +3743,6 @@ Current Year:
 year
 
 =========================================================
-======================== HISTORY ========================
-
-Show History:
-history
-
-Features:
-- stores previous calculations
-- stores answers
-- readline support
-
-=========================================================
-======================== SYSTEM COMMANDS ========================
-
-Show Help:
-help
-
-About:
-about
-
-Quit:
-quit, q, or exit
-
-=========================================================
 ======================== STOCK MARKET ========================
 =========================================================
 
@@ -3215,6 +4022,20 @@ Draw Card:
 draw_card()
 
 =========================================================
+======================== SYSTEM COMMANDS ========================
+Show History:
+history
+
+Show Help:
+help
+
+About:
+about
+
+Quit:
+quit, q, or exit
+
+=========================================================
 ======================== TRANSLATION ========================
 =========================================================
 
@@ -3409,6 +4230,67 @@ haversine(
 )
 
 =========================================================
+FORMULA LIBRARY
+=========================================================
+
+Single Formula:
+formula("kinetic energy")
+
+Search:
+find_formula("energy")
+
+Category:
+formulas_in("physics")
+
+Examples:
+
+formula("ideal gas law")
+formula("ohms law")
+formula("half life")
+formula("young modulus")
+formula("compound interest")
+
+=========================================================
+======================== ADVANCED PERIODIC TABLE ========================
+=========================================================
+
+Full Element Report:
+element_info("Fe")
+
+Electron Configuration:
+electron_configuration("Cu")
+
+Oxidation States:
+oxidation_states("Mn")
+
+Electronegativity:
+electronegativity("O")
+
+Atomic Radius:
+atomic_radius("W")
+
+Covalent Radius:
+covalent_radius("C")
+
+Density:
+density_element("Os")
+
+Melting Point:
+melting_point("Re")
+
+Boiling Point:
+boiling_point("He")
+
+Thermal Conductivity:
+thermal_conductivity("Ag")
+
+Specific Heat:
+specific_heat("Al")
+
+Find Element:
+find_element("tungsten")
+
+=========================================================
 ======================== ADVANCED FINANCE ========================
 =========================================================
 
@@ -3560,22 +4442,6 @@ def caesar_encrypt(text, shift):
 
     return result
 
-
-def caesar_decrypt(text, shift):
-    return caesar_encrypt(text, -shift)
-
-def present_value(fv, r, n):
-    return fv / ((1+r)**n)
-
-def future_value(pv, r, n):
-    return pv * ((1+r)**n)
-
-def npv(rate, cashflows):
-    return sum(
-        cf / ((1+rate)**i)
-        for i,cf in enumerate(cashflows)
-    )
-
 def quick_sort(arr):
     if len(arr) <= 1:
         return arr
@@ -3587,6 +4453,16 @@ def quick_sort(arr):
     right = [x for x in arr if x > pivot]
 
     return quick_sort(left) + mid + quick_sort(right)
+
+def coin_flip():
+    return random.choice(["Heads","Tails"])
+
+def rock_paper_scissors():
+    return random.choice([
+        "Rock",
+        "Paper",
+        "Scissors"
+    ])
 
 def binary_search(arr, target):
     low = 0
@@ -3605,11 +4481,51 @@ def binary_search(arr, target):
 
     return -1
 
-def tr(key):
-    return languages.get(language, languages["en"]).get(key, key)
+def caesar_decrypt(text, shift):
+    return caesar_encrypt(text, -shift)
 
 def english():
     return set_language("en")
+
+def alloy_density(densities,fractions):
+    return 1/sum(
+        f/d for d,f in zip(densities,fractions)
+    )
+
+def rule_of_mixtures(values,fractions):
+    return sum(
+        v*f for v,f in zip(values,fractions)
+    )
+
+def weight_to_atomic(weights,masses):
+
+    moles={}
+
+    for e in weights:
+        moles[e]=weights[e]/masses[e]
+
+    total=sum(moles.values())
+
+    return {
+        e:100*v/total
+        for e,v in moles.items()
+    }
+
+def atomic_to_weight(atomic,masses):
+
+    masses_calc={}
+
+    for e in atomic:
+        masses_calc[e]=atomic[e]*masses[e]
+
+    total=sum(masses_calc.values())
+
+    return {
+        e:100*v/total
+        for e,v in masses_calc.items()
+    }
+
+
 
 def spanish():
     return set_language("es")
@@ -3623,6 +4539,22 @@ def german():
 def japanese():
     return set_language("ja")
 
+def half_life(decay_constant):
+    return math.log(2)/decay_constant
+
+def activity(N,lambda_):
+    return N*lambda_
+
+def decay(N0, lambda_, t):
+    return N0*math.exp(-lambda_*t)
+
+def binding_energy(delta_m):
+    c = 299792458
+    return delta_m*c*c
+
+def tr(key):
+    return languages.get(language, languages["en"]).get(key, key)
+
 def set_language(lang):
     global language
 
@@ -3635,16 +4567,6 @@ def set_language(lang):
 # =========================================================
 # ASCII GRAPH
 # =========================================================
-
-def coin_flip():
-    return random.choice(["Heads","Tails"])
-
-def rock_paper_scissors():
-    return random.choice([
-        "Rock",
-        "Paper",
-        "Scissors"
-    ])
 
 def ascii_plot(expr):
 
@@ -3690,6 +4612,7 @@ def ascii_plot(expr):
 # =========================================================
 # VARIABLES DICT
 # =========================================================
+
 
 language = "en"
 
@@ -3750,7 +4673,36 @@ x, y, z = sp.symbols('x y z')
 variables = {
 
     # ================= SYMBOLS =================
+    "limiting_reactant": limiting_reactant,
+    "element_count": element_count,
 
+    "percent_composition":
+        percent_composition,
+
+    "empirical_formula":
+        empirical_formula,
+
+    "molecular_formula":
+        molecular_formula,
+
+    "balance": balance,
+
+    "moles_from_mass":
+        moles_from_mass,
+
+    "limiting_reactant":
+        limiting_reactant,
+
+    "theoretical_yield":
+        theoretical_yield,
+
+    "oxidation_lookup":
+        oxidation_lookup,
+
+
+    "formula": formula,
+    "find_formula": find_formula,
+    "formulas_in": formulas_in,
     "x": x,
     "y": y,
     "z": z,
@@ -3759,19 +4711,19 @@ variables = {
     "e": sp.E,
 
     # ================= TRIG =================
-    "weight_to_atomic": weight_to_atomic,
-    "rule_of_mixtures": rule_of_mixtures,
-    "alloy_density": alloy_density,
+
     "set_language": set_language,
     "sin": sin_wrapper,
     "cos": cos_wrapper,
     "tan": tan_wrapper,
-    "haversine": haversine,
+
     "asin": sp.asin,
     "acos": sp.acos,
     "atan": sp.atan,
-    "coin_flip": coin_flip,
-    "rock_paper_scissors": rock_paper_scissors,
+    "alloy_density": alloy_density,
+    "rule_of_mixtures": rule_of_mixtures,
+    "weight_to_atomic": weight_to_atomic,
+    "atomic_to_weight": atomic_to_weight,
     "sec": sp.sec,
     "csc": sp.csc,
     "cot": sp.cot,
@@ -3788,32 +4740,33 @@ variables = {
     "sqrt": sp.sqrt,
     "log": sp.log,
     "ln": sp.log,
-    "quick_sort": quick_sort,
-    "binary_search": binary_search,
+
     "expand": sp.expand,
     "expand_full": expand_full,
-    "translate": translate,
-    "simplify": sp.simplify,
-    "simplify_full": simplify_full,
-
-    "start_guess_game": start_guess_game,
-    "guess": guess,
-    "reveal_answer": reveal_answer,
-    "end_guess_game": end_guess_game,
-    "game_status": game_status,
-    
-    "factor": sp.factor,
-    "collect": collect_terms,
-
-    "solve": sp.solve,
-    "solvefor": solvefor,
     "stress": stress,
     "strain": strain,
     "youngs_modulus": youngs_modulus,
     "thermal_expansion": thermal_expansion,
-    "nsolve": nsolve_equation,
+    "simplify": sp.simplify,
+    "simplify_full": simplify_full,
 
+    "factor": sp.factor,
+    "collect": collect_terms,
+    "half_life": half_life,
+    "activity": activity,
+    "binding_energy": binding_energy,
+    "solve": sp.solve,
+    "solvefor": solvefor,
+    "quick_sort": quick_sort,
+    "binary_search": binary_search,
+    "nsolve": nsolve_equation,
     "is_equivalent": is_equivalent,
+
+    "material_info": material_info,
+    "density_material": density_material,
+    "youngs_modulus_material": youngs_modulus_material,
+    "melting_material": melting_material,
+    "thermal_conductivity_material": thermal_conductivity_material,
 
     # ================= CALCULUS =================
 
@@ -3823,27 +4776,15 @@ variables = {
 
     "integral": integral,
     "int": integral,
-    "transpose": transpose,
-    "rank": matrix_rank,
-    "jacobian": jacobian,
-    "qr": qr,
-    "lu": lu,
-    "projection": projection,
+
     "integrate": sp.integrate,
     "integral_def": definite_integral,
-
+    "translate": translate,
     "limit": limit,
     "taylor": taylor,
     "series_expansion": series_expansion,
-
-
-    "resistance": resistance,
-    "current": current,
-    "capacitance": capacitance,
-    "inductance": inductance,
-    "reactance": reactance,
-    "impedance": impedance,
-    "power_factor": power_factor,
+    "coin_flip": coin_flip,
+    "rock_paper_scissors": rock_paper_scissors,
     "gradient": gradient,
     "hessian": hessian_matrix,
 
@@ -3861,41 +4802,85 @@ variables = {
     "Function": sp.Function,
     "Symbol": sp.Symbol,
     "Derivative": sp.Derivative,
-
+    "quadratic": quadratic,
+    "linear": linear,
+    "cubic": cubic,
     # ================= MATRIX =================
 
     "Matrix": sp.Matrix,
-
+    "present_value": present_value,
+    "future_value": future_value,
+    "npv": npv,
     "matrix": matrix,
     "matmul": matrix_mul,
+    "transpose": transpose,
+    "rank": matrix_rank,
+    "density_material": density_material,
+    "youngs_modulus_material": youngs_modulus_material,
 
+    "jacobian": jacobian,
+    "qr": qr,
+    "lu": lu,
+    "projection": projection,
     "det": matrix_det,
     "determinant": matrix_det,
-
+    "stock": stock_metrics,
+    "stock_metrics": stock_metrics,
     "inv": matrix_inv,
     "inverse": matrix_inv,
-
+    "empirical_formula": empirical_formula,
     "eig": eigenvalues,
-
+    "weight_to_atomic": weight_to_atomic,
+    "rule_of_mixtures": rule_of_mixtures,
+    "alloy_density": alloy_density,
     "matrix_power": matrix_power,
     "matrix_norm": matrix_norm,
-
+    "haversine": haversine,
     "matrix_rref": matrix_rref,
     "matrix_trace": matrix_trace,
 
     "matrix_nullspace": matrix_nullspace,
     "matrix_columnspace": matrix_columnspace,
     "matrix_rowspace": matrix_rowspace,
-
+    "half_life": half_life,
+    "activity": activity,
+    "mass_defect": mass_defect,
+    "binding_energy": binding_energy,
+    "q_value": q_value,
     "characteristic_polynomial": characteristic_polynomial,
     "transpose": matrix_transpose,
     "matrix_transpose": matrix_transpose,
     "solve_linear_system": solve_linear_system,
     "is_square": is_square,
-
+    "laplace_transform": laplace_transform_expr,
+    "inverse_laplace": inverse_laplace,
+    "fourier_transform": fourier,
+    "inverse_fourier": inverse_fourier,
     # Optional advanced matrix features
     "rank": matrix_rank,
     "transpose": matrix_transpose,
+
+    "element_info": element_info,
+
+    "atomic_mass": atomic_mass,
+    "atomic_number": atomic_number,
+    "element_name": element_name,
+
+    "density_element": density_element,
+    "melting_point": melting_point,
+    "boiling_point": boiling_point,
+
+    "electron_configuration": electron_configuration,
+    "oxidation_states": oxidation_states,
+
+    "electronegativity": electronegativity,
+    "atomic_radius": atomic_radius,
+    "covalent_radius": covalent_radius,
+
+    "thermal_conductivity": thermal_conductivity,
+    "specific_heat": specific_heat,
+
+    "find_element": find_element,
 
     # ================= VECTOR =================
 
@@ -3919,36 +4904,32 @@ variables = {
     "iqr": iqr,
 
     "percentile": percentile,
-    "era": era,
-    "batting_average": batting_average,
-    "avg": batting_average,
-    "obp": obp,
-    "slg": slg,
-    "ops": ops,
+
     "skewness": skewness,
     "kurtosis": kurtosis,
-    "whip": whip,
-    "k9": k_per_9,
-    "bb9": bb_per_9,
-    "hr9": hr_per_9,
-    "fielding_percentage": fielding_percentage,
+
     "geometric_mean": geometric_mean,
     "harmonic_mean": harmonic_mean,
 
     "correlation": correlation,
     "covariance": covariance,
     "corr_matrix": corr_matrix,
-    "stock": stock_metrics,
-    "stock_metrics": stock_metrics,
+
     "z_scores": z_scores,
     "moving_average": moving_average,
     "correlation_strength": correlation_strength,
 
+    "resistance": resistance,
+    "current": current,
+    "capacitance": capacitance,
+    "inductance": inductance,
+    "reactance": reactance,
+    "impedance": impedance,
+    "power_factor": power_factor,
+
     "linreg": linear_regression,
     "polyfit": poly_fit,
-    "present_value": present_value,
-    "future_value": future_value,
-    "npv": npv,
+
     "probability": probability,
     "binomial_probability": binomial_probability,
 
@@ -3962,19 +4943,27 @@ variables = {
 
     "factor_list": factor_list,
     "largest_prime_factor": largest_prime_factor,
-
+    "english": english,
+    "spanish": spanish,
+    "french": french,
+    "german": german,
+    "japanese": japanese,
     "totient": totient,
 
     "prime": is_prime,
     "is_prime": is_prime,
 
     "primes_up_to": primes_up_to,
-
+    "orbital_period": orbital_period,
+    "luminosity": luminosity,
+    "redshift": redshift,
+    "distance_modulus": distance_modulus,
+    "hill_sphere": hill_sphere,
     "modinv": modinv,
 
     "permutations": permutations,
     "combinations": combinations,
-    "empirical_formula": empirical_formula,
+
     "factorial": sp.factorial,
 
     # ================= COMPLEX =================
@@ -4004,6 +4993,12 @@ variables = {
 
     "density": density,
     "pressure": pressure,
+    
+    "start_guess_game": start_guess_game,
+    "guess": guess,
+    "reveal_answer": reveal_answer,
+    "end_guess_game": end_guess_game, 
+    "game_status": game_status,
 
     "work": work,
     "power": power,
@@ -4020,6 +5015,13 @@ variables = {
     "momentum_vector": momentum_vector,
 
     "projectile_range": projectile_range,
+
+    "stock": stock,
+    "stock_price": stock_price,
+    "market_cap": market_cap,
+    "pe_ratio": pe_ratio,
+    "dividend_yield": dividend_yield,
+    "stock_name": stock_name,
 
     "E_mc2": energy_from_mass,
 
@@ -4155,11 +5157,7 @@ variables = {
 
     "vigenere_encrypt": vigenere_encrypt,
     "vigenere_decrypt": vigenere_decrypt,
-    "half_life": half_life,
-    "activity": activity,
-    "mass_defect": mass_defect,
-    "binding_energy": binding_energy,
-    "q_value": q_value,
+
     "base64_encode": base64_encode,
     "base64_decode": base64_decode,
 
@@ -4168,16 +5166,18 @@ variables = {
 
     # ================= UTILITIES =================
 
-    "orbital_period": orbital_period,
-    "luminosity": luminosity,
-    "redshift": redshift,
-    "distance_modulus": distance_modulus,
-    "hill_sphere": hill_sphere,
-    
-    
     "round": round,
     "abs": abs,
-
+    "whip": whip,
+    "k9": k_per_9,
+    "bb9": bb_per_9,
+    "hr9": hr_per_9,
+    "era": era,
+    "batting_average": batting_average,
+    "avg": batting_average,
+    "obp": obp,
+    "slg": slg,
+    "ops": ops,"fielding_percentage": fielding_percentage,
     "floor": math.floor,
     "ceil": math.ceil,
 
@@ -4198,11 +5198,6 @@ variables = {
 
     # ================= STOPWATCH =================
 
-
-    "laplace_transform": laplace_transform_expr,
-    "inverse_laplace": inverse_laplace,
-    "fourier_transform": fourier,
-    "inverse_fourier": inverse_fourier,
     "stopwatch_start": stopwatch_start,
     "stopwatch_stop": stopwatch_stop,
 
