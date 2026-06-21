@@ -220,14 +220,8 @@ def matrix_rank(A):
 def matrix_trace(A):
     return sp.Matrix(A).trace()
 
-def elem(symbol):
-    return element(symbol)
-
 def atomic_mass(symbol):
     return element(symbol).atomic_weight
-
-def atomic_number(symbol):
-    return element(symbol).atomic_number
 
 def density_element(symbol):
     return element(symbol).density
@@ -298,16 +292,11 @@ def find_element(name):
 
     return None
 
-
-
 def matrix_norm(A):
     return float(sp.Matrix(A).norm())
 
 def matrix_rref(A):
     return sp.Matrix(A).rref()[0]
-
-def matrix_nullspace(A):
-    return sp.Matrix(A).nullspace()
 
 def matrix_columnspace(A):
     return sp.Matrix(A).columnspace()
@@ -359,25 +348,6 @@ def covariance(x, y):
 def correlation(x, y):
     return np.corrcoef(x, y)[0][1]
 
-import random
-
-def get_random_number(minimum, maximum):
-    return random.randint(minimum, maximum)
-
-try:
-    min_val = int(input("Enter the minimum number: "))
-    max_val = int(input("Enter the maximum number: "))
-    
-    if min_val > max_val:
-        print("Error: Minimum cannot be larger than maximum!")
-    else:
-        result = get_random_number(min_val, max_val)
-        print(f"Your random number is: {result}")
-        
-except ValueError:
-    print("Please enter valid whole numbers only.")
-
-
 def z_scores(data):
     mean = statistics.mean(data)
     std = statistics.stdev(data)
@@ -425,15 +395,21 @@ def correlation_strength(r):
 
 def velocity(distance, time):
     return distance / time
+    if denominator == 0:
+        return "Division by zero"
 
 def acceleration(v1, v2, time):
     return (v2 - v1) / time
 
 def density(mass, volume):
     return mass / volume
+    if denominator == 0:
+        return "Division by zero"
 
 def pressure(force, area):
     return force / area
+    if denominator == 0:
+        return "Division by zero"
 
 def work(force, distance):
     return force * distance
@@ -443,6 +419,8 @@ def power(work_done, time):
 
 def frequency(period):
     return 1 / period
+    if denominator == 0:
+        return "Division by zero"
 
 def period(freq):
     return 1 / freq
@@ -507,7 +485,7 @@ def relativistic_ke(m, v):
 def momentum_vector(mass, velocity_vector):
     return [mass * v for v in velocity_vector]
 
-def projectile_range(v, theta_deg, g=9.81):
+def projectile_range(v, theta_deg, g=9.80665):
     theta = math.radians(theta_deg)
     return (v**2 * math.sin(2*theta)) / g
 
@@ -819,14 +797,12 @@ def pe_ratio(symbol):
 
 def molarity(moles_value, liters):
     return moles_value / liters
+    if denominator == 0:
+        return "Division by zero"
 
 def ideal_gas_volume(n, T, P):
     R = 0.082057
     return n * R * T / P
-
-def ideal_gas_pressure(n, T, V):
-    R = 0.082057
-    return n * R * T / V
 
 def ideal_gas_temperature(P, V, n):
     R = 0.082057
@@ -840,9 +816,31 @@ def quadratic(a,b,c):
     x = sp.Symbol('x')
     return sp.solve(a*x**2+b*x+c)
 
+import random
+
+def random_number(minimum=1, maximum=100):
+    minimum = int(minimum)
+    maximum = int(maximum)
+
+    if minimum > maximum:
+        return "Error: minimum cannot be larger than maximum."
+
+    return random.randint(minimum, maximum)
+
 def linear(a,b):
     x = sp.Symbol('x')
     return sp.solve(a*x+b)
+
+import time
+
+start_time = None
+
+def stopwatch_start():
+    global start_time
+
+    start_time = time.time()
+
+    return "Stopwatch started."
 
 def cubic(a,b,c,d):
     x = sp.Symbol('x')
@@ -850,7 +848,6 @@ def cubic(a,b,c,d):
 
 def protons(Z):
     return Z
-
 
 def density_material(name):
     return materials[name.lower()]["density"]
@@ -860,9 +857,6 @@ def youngs_modulus_material(name):
 
 def electrons(Z):
     return Z
-
-def neutrons(A, Z):
-    return A - Z
 
 def ph(H):
     return -math.log10(H)
@@ -896,7 +890,7 @@ def largest_prime_factor(n):
 def totient(n):
     return sp.totient(n)
 
-def decimal(x):
+def decimal_from_base(x):
     return float(x)
 
 def stats_mean(data):
@@ -1030,7 +1024,7 @@ def jacobian(exprs, vars_):
 def hessian(expr):
     return sp.hessian(sp.sympify(expr), (x, y))
 
-def newton(expr, guess, iterations=10):
+def newton_nsolve(expr, guess, iterations=10):
 
     expr = sp.sympify(expr)
     deriv = sp.diff(expr, x)
@@ -1104,10 +1098,6 @@ def summation(expr, start, end):
 def product(expr, start, end):
 
     return sp.product(sp.sympify(expr), (x, start, end))
-
-def ideal_gas_pressure(n, T, V):
-    R = 8.314
-    return (n * R * T) / V
 
 def ideal_gas_temperature(P, V, n):
     R = 8.314
@@ -1188,12 +1178,6 @@ def moving_average(data, window=3):
     arr = np.array(data)
     return np.convolve(arr, np.ones(window)/window, mode='valid').tolist()
 
-def correlation_strength(x, y):
-    r = np.corrcoef(x, y)[0,1]
-    return {
-        "r": r,
-        "strength": "strong" if abs(r) > 0.7 else "weak"
-    }
 
 def relativistic_ke(m, v):
     c = 299792458
@@ -1391,22 +1375,26 @@ import time
 
 start_time = None
 
-def stopwatch_start():
-
+def stopwatch_stop():
     global start_time
-    start_time = time.time()
+
+    if start_time is None:
+        return "Stopwatch has not been started."
+
+    elapsed = time.time() - start_time
+
+    start_time = None
+
+    return elapsed
 
 def stopwatch_stop():
-
     return time.time() - start_time
 
 def save_note(filename, text):
-
     with open(filename, "w") as f:
         f.write(text)
 
 def read_note(filename):
-
     with open(filename) as f:
         return f.read()
 
@@ -1725,9 +1713,6 @@ def ideal_gas_pressure(n,T,V):
     return (n*8.314*T)/V
 
 def protons(s):
-    return atomic_number(s)
-
-def electrons(s):
     return atomic_number(s)
 
 def neutrons(s):
@@ -2091,7 +2076,7 @@ def molecules(moles_value):
 
 def molarity(moles_value, liters):
     return moles_value / liters
-
+    
 def ideal_gas_volume(n, T, P):
     return (n * R * T) / P
 
@@ -2103,9 +2088,14 @@ def acceleration(velocity_change, time):
 
 def density(mass, volume):
     return mass / volume
+    if denominator == 0:
+        return "Division by zero"
 
 def pressure(force_value, area):
     return force_value / area
+    if denominator == 0:
+        return "Division by zero"
+
 
 def work(force_value, distance):
     return force_value * distance
@@ -2115,6 +2105,8 @@ def power(work_value, time):
 
 def frequency(period):
     return 1 / period
+    if denominator == 0:
+        return "Division by zero"
 
 def period(freq):
     return 1 / freq
@@ -2929,9 +2921,6 @@ def theoretical_yield(
         * product_moles
     )
 
-def ideal_gas_pressure(
-    n,T,V
-):
     return n*R*T/V
 
 def molarity(
@@ -4695,7 +4684,6 @@ variables = {
     # ================= SYMBOLS =================
     "limiting_reactant": limiting_reactant,
     "element_count": element_count,
-
     "percent_composition":
         percent_composition,
 
@@ -5261,7 +5249,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.6. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.2. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
