@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+import random
 import sys
 sys.set_int_max_str_digits(0)
 
@@ -357,6 +357,25 @@ def covariance(x, y):
 
 def correlation(x, y):
     return np.corrcoef(x, y)[0][1]
+
+import random
+
+def get_random_number(minimum, maximum):
+    return random.randint(minimum, maximum)
+
+try:
+    min_val = int(input("Enter the minimum number: "))
+    max_val = int(input("Enter the maximum number: "))
+    
+    if min_val > max_val:
+        print("Error: Minimum cannot be larger than maximum!")
+    else:
+        result = get_random_number(min_val, max_val)
+        print(f"Your random number is: {result}")
+        
+except ValueError:
+    print("Please enter valid whole numbers only.")
+
 
 def z_scores(data):
     mean = statistics.mean(data)
