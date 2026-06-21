@@ -49,6 +49,7 @@ required_packages = {
     "yfinance": "yfinance",
     "pandas": "pandas",
     "scipy": "scipy",
+    "deep_translator": "deep-translator"
 }
 
 import re
