@@ -54,6 +54,317 @@ required_packages = {
 
 import re
 
+def selftest():
+
+    tests = """
+2+2
+sqrt(81)
+factorial(5)
+log(10)
+exp(2)
+abs(-5)
+round(3.14159,2)
+
+sin(pi/2)
+cos(pi)
+tan(pi/4)
+
+asin(1)
+acos(1)
+atan(1)
+
+sinh(1)
+cosh(1)
+tanh(1)
+
+radians(90)
+degrees(pi)
+
+simplify(x+x)
+simplify_full((x**2-1)/(x-1))
+expand((x+1)**2)
+expand_full((x+1)**5)
+
+factor(x**2-9)
+solve(x**2-9)
+roots(x**2-9)
+
+derivative(x**3)
+diff(x**3)
+integral(x**2)
+integrate(x**2)
+
+integral_def(x**2,0,5)
+numerical_integral(x**2,0,5)
+
+limit(sin(x)/x,0)
+
+taylor(sin(x),0,6)
+series_expansion(sin(x),0,10)
+
+gradient(x**2+y**2+z**2)
+hessian(x**2+y**2+z**2)
+
+laplacian(x**2+y**2+z**2)
+
+summation(x**2,1,10)
+product(x,1,5)
+
+piecewise((x**2,x<0),(x,True))
+
+newton(x**2-2,1)
+
+mean([1,2,3,4,5])
+median([1,2,3,4,5])
+variance([1,2,3,4,5])
+std([1,2,3,4,5])
+
+percentile([1,2,3,4,5],50)
+
+correlation([1,2,3],[2,4,6])
+covariance([1,2,3],[2,4,6])
+
+range_data([1,2,3,10])
+sum_data([1,2,3])
+
+z_scores([1,2,3,4,5])
+moving_average([1,2,3,4,5],3)
+
+quartiles([1,2,3,4,5])
+iqr([1,2,3,4,5])
+
+skewness([1,2,3,4,5])
+kurtosis([1,2,3,4,5])
+
+geometric_mean([1,2,3,4])
+harmonic_mean([1,2,3,4])
+
+matrix([[1,2],[3,4]])
+det([[1,2],[3,4]])
+inv([[1,2],[3,4]])
+
+transpose([[1,2],[3,4]])
+trace([[1,2],[3,4]])
+rank([[1,2],[3,4]])
+
+matrix_power([[1,2],[3,4]],2)
+
+eig([[1,2],[3,4]])
+
+solve_linear_system([[2,1],[1,3]],[5,6])
+
+matrix_norm([[1,2],[3,4]])
+matrix_rref([[1,2],[3,4]])
+matrix_nullspace([[1,2],[3,4]])
+matrix_columnspace([[1,2],[3,4]])
+matrix_rowspace([[1,2],[3,4]])
+
+characteristic_polynomial([[1,2],[3,4]])
+
+dot([1,2,3],[4,5,6])
+cross([1,0,0],[0,1,0])
+
+mag([3,4])
+
+distance([1,2],[4,6])
+
+gcd(48,18)
+lcm(12,18)
+
+prime(17)
+is_square(144)
+
+factorint(360)
+factorint_safe(360)
+
+totient(10)
+
+modinv(3,11)
+
+ncr(5,2)
+npr(5,2)
+
+primes_up_to(100)
+
+bin(42)
+oct(64)
+hex(255)
+
+decimal("1010",2)
+
+base_convert(255,10,16)
+
+to_roman(2024)
+
+circle_area(5)
+sphere_volume(5)
+
+triangle_area(3,4,5)
+
+arc_length(5,pi)
+
+ke(10,5)
+momentum(10,5)
+
+force(10,9.8)
+
+voltage(2,10)
+
+emc2(1)
+mass_from_energy(8.9875517873681764e16)
+
+velocity(100,5)
+acceleration(20,4)
+
+density(10,2)
+pressure(100,10)
+
+work(10,5)
+power(100,10)
+
+frequency(0.02)
+period(50)
+
+wavelength(3e8,5e14)
+
+escape_velocity(5.97e24,6.37e6)
+
+projectile_range(100,45)
+
+schwarzschild(5.97e24)
+
+decay(1000,0.693,10)
+
+gravity_force(5.97e24,1000,6.37e6)
+
+momentum_vector(5,[1,2,3])
+
+elements()
+
+atomic_mass("Fe")
+atomic_number("Fe")
+
+element_name("Fe")
+
+molar_mass("H2O")
+
+protons("Fe")
+electrons("Fe")
+neutrons("Fe")
+
+ph(1e-7)
+
+ideal_gas_pressure(1,273,22.4)
+ideal_gas_volume(1,273,1)
+ideal_gas_temperature(1,22.4,1)
+ideal_gas_moles(1,273,22.4)
+
+element_info("Fe")
+
+electron_configuration("Cu")
+
+oxidation_states("Mn")
+
+electronegativity("O")
+
+atomic_radius("W")
+
+covalent_radius("C")
+
+density_element("Os")
+
+melting_point("Re")
+
+boiling_point("He")
+
+thermal_conductivity("Ag")
+
+specific_heat("Al")
+
+find_element("tungsten")
+
+convert(1,"kg","lb")
+convert(1,"m","ft")
+
+randint(1,10)
+random()
+
+choice([1,2,3])
+
+draw_card()
+roll()
+
+simple_interest(1000,0.05,1)
+
+AND(True,False)
+OR(True,False)
+NOT(True)
+XOR(True,False)
+
+caesar_encrypt("HELLO",3)
+caesar_decrypt("KHOOR",3)
+
+rot13("HELLO")
+
+md5_hash("hello")
+sha1_hash("hello")
+sha256_hash("hello")
+sha512_hash("hello")
+
+base64_encode("hello")
+base64_decode("aGVsbG8=")
+
+pretty_json({"a":1})
+
+stopwatch_start()
+stopwatch_stop()
+
+system_info()
+"""
+
+    namespace = {**variables, **user_vars}
+
+    passed = 0
+    failed = 0
+
+    for test in tests.strip().splitlines():
+
+        test = test.strip()
+
+        if not test:
+            continue
+
+        try:
+            result = eval(
+                test,
+                {"__builtins__": {}},
+                namespace
+            )
+
+            print(f"[PASS] {test}")
+            passed += 1
+
+            
+            failed += 1
+
+        except Exception as e:
+             print(f"[FAIL] {test}")
+             print(f"{repr(e)}")
+
+def emc2(mass):
+    """
+    Calculates energy from mass using E = mc²
+
+    mass: kilograms
+    returns: joules
+    """
+    c = 299_792_458  # m/s
+
+    return mass * c**2
+
+def mass_from_energy(energy):
+    return energy / c**2
+
 def limiting_reactant(reaction, available):
 
     reactants = reaction.split("->")[0]
@@ -872,7 +1183,7 @@ F = 96485.33212
 
 # ---------------- CALCULUS ----------------
 
-def newton(expr, var, guess):
+def newton(expr, variable, guess):
     return sp.nsolve(expr, var, guess)
 
 def series_expansion(expr, var, point=0, order=6):
@@ -1368,8 +1679,17 @@ def schwarzschild(m):
 
 import json
 
-def pretty_json(text):
-    return json.dumps(json.loads(text), indent=4)
+def pretty_json(data):
+
+    if isinstance(data, str):
+        obj = json.loads(data)
+    else:
+        obj = data
+
+    return json.dumps(
+        obj,
+        indent=4
+    )
 
 import time
 
@@ -4682,11 +5002,13 @@ x, y, z = sp.symbols('x y z')
 variables = {
 
     # ================= SYMBOLS =================
+    "selftest": selftest,
     "limiting_reactant": limiting_reactant,
     "element_count": element_count,
     "percent_composition":
         percent_composition,
-
+    "emc2": emc2,
+    "mass_from_energy": mass_from_energy,
     "empirical_formula":
         empirical_formula,
 
@@ -4968,7 +5290,11 @@ variables = {
     "distance_modulus": distance_modulus,
     "hill_sphere": hill_sphere,
     "modinv": modinv,
-
+    "distance": distance,
+    "trace": trace,
+    "ncr": ncr,
+    "npr": npr,
+    "arc_length": arc_length,
     "permutations": permutations,
     "combinations": combinations,
 
@@ -5249,7 +5575,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.2. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.7. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
