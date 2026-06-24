@@ -18,4 +18,4 @@ brew install pip3
 
 pip3 install --break-system-packages sympy numpy matplotlib rich yfinance pandas scipy deep-translator mendeleev
 
-To run type python3 dave2.py into your terminal. If anything isn't working, please add it into the comments, and I will do my best to fix it. I you have any suggestions, I will also do my best to integrate them in, so you can put those in the comments too.
+To run type python3 dave2.py into your terminal. If you downloaded the file, run cd Downloads first, and then run python3 dave2.py. If anything isn't working, please add it into the comments, and I will do my best to fix it. I you have any suggestions, I will also do my best to integrate them in, so you can put those in the comments too.
