@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+SAVE_FILE = "variables.pkl"
+history = []
+
+from datetime import datetime
 import random
 import sys
 sys.set_int_max_str_digits(0)
@@ -61,295 +65,320 @@ def selftest():
 sqrt(81)
 factorial(5)
 log(10)
+ln(E)
 exp(2)
 abs(-5)
 round(3.14159,2)
-
-sin(pi/2)
-cos(pi)
-tan(pi/4)
-
-asin(1)
-acos(1)
-atan(1)
-
-sinh(1)
-cosh(1)
-tanh(1)
-
-radians(90)
-degrees(pi)
+floor(3.9)
+ceil(3.1)
 
 simplify(x+x)
 simplify_full((x**2-1)/(x-1))
 expand((x+1)**2)
 expand_full((x+1)**5)
-
+collect(x**2+2*x+x**2)
 factor(x**2-9)
 solve(x**2-9)
+solve(Eq(x**2,9))
+solvefor(x**2+y-5,"y")
+solve([x+y-5,x-y-1],[x,y])
+nsolve(x**3-2,1)
 roots(x**2-9)
+(x**2+1).subs(x,5)
+(x**2+1).evalf()
+is_equivalent(x**2-1,(x-1)*(x+1))
+piecewise((x**2,x<0),(x,True))
 
 derivative(x**3)
 diff(x**3)
+diff(x**3,x,2)
 integral(x**2)
 integrate(x**2)
-
 integral_def(x**2,0,5)
 numerical_integral(x**2,0,5)
-
 limit(sin(x)/x,0)
-
 taylor(sin(x),0,6)
 series_expansion(sin(x),0,10)
-
 gradient(x**2+y**2+z**2)
 hessian(x**2+y**2+z**2)
-
+directional_derivative(x**2+y**2+z**2,[1,1,1],[1,0,0])
 laplacian(x**2+y**2+z**2)
-
 summation(x**2,1,10)
 product(x,1,5)
+newton(x**2-2,x,1)
+dsolve(Derivative(y(x),x)-y(x))
 
-piecewise((x**2,x<0),(x,True))
+sin(pi/2)
+cos(pi)
+tan(pi/4)
+asin(1)
+acos(1)
+atan(1)
+sinh(1)
+cosh(1)
+tanh(1)
+radians(90)
+degrees(pi)
 
-newton(x**2-2,1)
+a=10
+a+5
+f=x**2+1
+ans
+
+graph(x**2)
+graph(sin(x))
+graph(cos(x))
+graph(x**3-2*x)
+graph3d(x**2+y**2)
+graph3d(sin(x*y))
+graph3d(x**2-y**2)
+graph_parametric("t","t**2")
+graph_polar("theta")
+intersection(x**2,x+2)
+ascii_plot(x**2)
 
 mean([1,2,3,4,5])
 median([1,2,3,4,5])
+mode([1,1,2,3])
 variance([1,2,3,4,5])
 std([1,2,3,4,5])
-
 percentile([1,2,3,4,5],50)
-
 correlation([1,2,3],[2,4,6])
 covariance([1,2,3],[2,4,6])
-
 range_data([1,2,3,10])
 sum_data([1,2,3])
-
 z_scores([1,2,3,4,5])
 moving_average([1,2,3,4,5],3)
-
 quartiles([1,2,3,4,5])
 iqr([1,2,3,4,5])
-
 skewness([1,2,3,4,5])
 kurtosis([1,2,3,4,5])
-
 geometric_mean([1,2,3,4])
 harmonic_mean([1,2,3,4])
 
 matrix([[1,2],[3,4]])
 det([[1,2],[3,4]])
 inv([[1,2],[3,4]])
-
 transpose([[1,2],[3,4]])
 trace([[1,2],[3,4]])
 rank([[1,2],[3,4]])
-
+matmul([[1,2]],[[3],[4]])
 matrix_power([[1,2],[3,4]],2)
-
 eig([[1,2],[3,4]])
-
 solve_linear_system([[2,1],[1,3]],[5,6])
-
+jacobian([x**2+y,y**2+x],[x,y])
 matrix_norm([[1,2],[3,4]])
 matrix_rref([[1,2],[3,4]])
 matrix_nullspace([[1,2],[3,4]])
 matrix_columnspace([[1,2],[3,4]])
 matrix_rowspace([[1,2],[3,4]])
-
 characteristic_polynomial([[1,2],[3,4]])
 
 dot([1,2,3],[4,5,6])
 cross([1,0,0],[0,1,0])
-
 mag([3,4])
-
+angle([1,0],[0,1])
 distance([1,2],[4,6])
 
 gcd(48,18)
 lcm(12,18)
-
 prime(17)
 is_square(144)
-
 factorint(360)
 factorint_safe(360)
-
 totient(10)
-
 modinv(3,11)
-
+primes_up_to(100)
 ncr(5,2)
 npr(5,2)
 
-primes_up_to(100)
-
-bin(42)
-oct(64)
-hex(255)
-
-decimal("1010",2)
-
-base_convert(255,10,16)
-
-to_roman(2024)
-
-circle_area(5)
-sphere_volume(5)
-
-triangle_area(3,4,5)
-
-arc_length(5,pi)
-
-ke(10,5)
-momentum(10,5)
-
-force(10,9.8)
-
-voltage(2,10)
-
-emc2(1)
-mass_from_energy(8.9875517873681764e16)
-
-velocity(100,5)
-acceleration(20,4)
-
-density(10,2)
-pressure(100,10)
-
-work(10,5)
-power(100,10)
-
-frequency(0.02)
-period(50)
-
-wavelength(3e8,5e14)
-
-escape_velocity(5.97e24,6.37e6)
-
-projectile_range(100,45)
-
-schwarzschild(5.97e24)
-
-decay(1000,0.693,10)
-
-gravity_force(5.97e24,1000,6.37e6)
-
-momentum_vector(5,[1,2,3])
-
 elements()
-
 atomic_mass("Fe")
 atomic_number("Fe")
-
 element_name("Fe")
-
+element_info("Fe")
+find_element("tungsten")
 molar_mass("H2O")
-
+molar_mass("CO2")
+molar_mass("C6H12O6")
+moles_from_mass(18.015,"H2O")
 protons("Fe")
 electrons("Fe")
 neutrons("Fe")
-
 ph(1e-7)
-
 ideal_gas_pressure(1,273,22.4)
 ideal_gas_volume(1,273,1)
 ideal_gas_temperature(1,22.4,1)
 ideal_gas_moles(1,273,22.4)
-
-element_info("Fe")
-
 electron_configuration("Cu")
-
 oxidation_states("Mn")
-
 electronegativity("O")
-
 atomic_radius("W")
-
 covalent_radius("C")
-
 density_element("Os")
-
 melting_point("Re")
-
 boiling_point("He")
-
 thermal_conductivity("Ag")
-
 specific_heat("Al")
+element_count("C6H12O6")
+percent_composition("H2O")
+empirical_formula({"C":40.0,"H":6.7,"O":53.3})
+molecular_formula("CH2O",180)
+balance("H2 + O2 -> H2O")
+limiting_reactant("2H2 + O2 -> 2H2O",{"H2":4,"O2":1})
+theoretical_yield("2H2 + O2 -> 2H2O",{"H2":4,"O2":1},"H2O")
+oxidation_lookup("KMnO4")
+formula("water")
+find_formula("glucose")
+formulas_in("C6H12O6")
 
-find_element("tungsten")
+ke(10,5)
+momentum(10,5)
+force(10,9.8)
+voltage(2,10)
+emc2(1)
+mass_from_energy(8.9875517873681764e16)
+velocity(100,5)
+acceleration(20,4)
+density(10,2)
+pressure(100,10)
+work(10,5)
+power(100,10)
+frequency(0.02)
+period(50)
+wavelength(3e8,5e14)
+escape_velocity(5.97e24,6.37e6)
+projectile_range(100,45)
+schwarzschild(5.97e24)
+decay(1000,0.693,10)
+gravity_force(5.97e24,1000,6.37e6)
+momentum_vector(5,[1,2,3])
 
 convert(1,"kg","lb")
 convert(1,"m","ft")
+base_convert(255,10,16)
+bin(42)
+oct(64)
+hex(255)
+decimal("1010",2)
+to_roman(2024)
 
 randint(1,10)
 random()
-
+randfloat(0,1)
 choice([1,2,3])
-
 draw_card()
 roll()
 
-simple_interest(1000,0.05,1)
+simple_interest(1000,0.05,2)
+compound_interest(1000,0.05,2,12)
+loan_payment(10000,0.05,5)
 
 AND(True,False)
 OR(True,False)
 NOT(True)
 XOR(True,False)
 
-caesar_encrypt("HELLO",3)
-caesar_decrypt("KHOOR",3)
-
-rot13("HELLO")
-
+caesar_encrypt("hello",3)
+caesar_decrypt("khoor",3)
+rot13("hello")
 md5_hash("hello")
 sha1_hash("hello")
 sha256_hash("hello")
 sha512_hash("hello")
-
+xor_encrypt("hello","key")
+vigenere_encrypt("HELLO","KEY")
+vigenere_decrypt("RIJVS","KEY")
 base64_encode("hello")
 base64_decode("aGVsbG8=")
+rsa_encrypt("hello",65537,3233)
+rsa_decrypt(2790,2753,3233)
 
-pretty_json({"a":1})
+save_note("note.txt","hello")
+read_note("note.txt")
+
+pretty_json('{"a":1}')
+validate_expr("x**2+1")
+explain("x**2+1")
+approx(pi)
 
 stopwatch_start()
 stopwatch_stop()
 
 system_info()
+
+commands()
+
+time
+date
+month
+year
+
+deg
+rad
+
+lang en
+lang es
+lang fr
+lang de
+lang ja
+
+help
+about
+history
+quit
+exit
+q
 """
 
-    namespace = {**variables, **user_vars}
+    namespace = {}
+
+    try:
+        namespace.update(globals().get("variables", {}))
+    except:
+        pass
+
+    try:
+        namespace.update(globals().get("user_vars", {}))
+    except:
+        pass
 
     passed = 0
     failed = 0
 
+    bad_strings = ["Error", "error", "None", "zoo", "nan", "ComplexInfinity"]
+
+    print("\n===== DAVE SELF TEST =====\n")
+
     for test in tests.strip().splitlines():
-
         test = test.strip()
-
         if not test:
             continue
 
         try:
-            result = eval(
-                test,
-                {"__builtins__": {}},
-                namespace
+            result = eval(test, {"__builtins__": {}}, namespace)
+            result_str = str(result).strip()
+
+            bad = (
+                result_str.replace(" ", "") == test.replace(" ", "")
+                or result_str == ""
+                or any(x in result_str for x in bad_strings)
             )
 
-            print(f"[PASS] {test}")
-            passed += 1
-
-            
-            failed += 1
+            if bad:
+                print(f"[BAD ] {test}\n       Returned: {result_str}")
+                failed += 1
+            else:
+                print(f"[PASS] {test}\n       -> {result_str}")
+                passed += 1
 
         except Exception as e:
-             print(f"[FAIL] {test}")
-             print(f"{repr(e)}")
+            print(f"[FAIL] {test}\n       {repr(e)}")
+            failed += 1
+
+    print("\nPassed:", passed)
+    print("Failed:", failed)
+    print("==========================")
 
 def emc2(mass):
     """
@@ -362,7 +391,30 @@ def emc2(mass):
 
     return mass * c**2
 
+def time():
+    return datetime.now().strftime("%H:%M:%S")
+
+def date():
+    return datetime.now().strftime("%Y-%m-%d")
+
+def month():
+    return datetime.now().strftime("%B")
+
+def year():
+    return datetime.now().year
+
+def deg():
+    global angle_mode
+    angle_mode = "deg"
+    return "Degree mode"
+
+def rad():
+    global angle_mode
+    angle_mode = "rad"
+    return "Radian mode"
+
 def mass_from_energy(energy):
+    c = 299_792_458
     return energy / c**2
 
 def limiting_reactant(reaction, available):
@@ -450,7 +502,7 @@ import pandas as pd
 import sympy as sp
 import numpy as np
 
-np.seterr(divide='raise', invalid='raise', over='raise', under='raise')
+np.seterr(divide='warn', invalid='warn', over='warn', under='warn')
 
 from fractions import Fraction
 import matplotlib
@@ -476,6 +528,8 @@ import os
 import atexit
 import datetime
 import re
+
+E = sp.E
 
 # =========================================================
 # CONSOLE
@@ -524,9 +578,6 @@ import math
 import statistics
 
 # ---------------- MATRIX ----------------
-
-def matrix_rank(A):
-    return sp.Matrix(A).rank()
 
 def matrix_trace(A):
     return sp.Matrix(A).trace()
@@ -642,17 +693,6 @@ def iqr(data):
     q1, _, q3 = quartiles(data)
     return q3 - q1
 
-def percentile(data, p):
-    data = sorted(data)
-    k = (len(data)-1)*(p/100)
-    f = math.floor(k)
-    c = math.ceil(k)
-
-    if f == c:
-        return data[int(k)]
-
-    return data[f]*(c-k) + data[c]*(k-f)
-
 def covariance(x, y):
     return np.cov(x, y, bias=False)[0][1]
 
@@ -683,7 +723,36 @@ def kurtosis(data):
     return np.mean(((x-m)/s)**4) - 3
 
 def geometric_mean(data):
-    return statistics.geometric_mean(data)
+    return math.prod(data) ** (1 / len(data)) if data else 0
+
+def skewness(data):
+    x = np.array(data)
+    m = np.mean(x)
+    s = np.std(x)
+
+    if s == 0:
+        return 0
+
+    return np.mean(((x - m) / s) ** 3)
+
+def kurtosis(data):
+    x = np.array(data)
+    m = np.mean(x)
+    s = np.std(x)
+
+    if s == 0:
+        return 0
+
+    return np.mean(((x - m) / s) ** 4) - 3
+
+def moving_average(data, n):
+    if n <= 0 or n > len(data):
+        return []
+
+    return [
+        sum(data[i:i+n]) / n
+        for i in range(len(data) - n + 1)
+    ]
 
 def harmonic_mean(data):
     return statistics.harmonic_mean(data)
@@ -705,22 +774,24 @@ def correlation_strength(r):
 # ---------------- PHYSICS ----------------
 
 def velocity(distance, time):
-    return distance / time
-    if denominator == 0:
+    if time == 0:
         return "Division by zero"
+    return distance / time
+
+
 
 def acceleration(v1, v2, time):
     return (v2 - v1) / time
 
 def density(mass, volume):
-    return mass / volume
-    if denominator == 0:
+    if volume == 0:
         return "Division by zero"
+    return mass / volume
 
 def pressure(force, area):
-    return force / area
-    if denominator == 0:
+    if area == 0:
         return "Division by zero"
+    return force / area
 
 def work(force, distance):
     return force * distance
@@ -729,14 +800,18 @@ def power(work_done, time):
     return work_done / time
 
 def frequency(period):
-    return 1 / period
-    if denominator == 0:
+    if period == 0:
         return "Division by zero"
+    return 1 / period
 
 def period(freq):
+    if freq == 0:
+        return "Division by zero"
     return 1 / freq
 
 def wavelength(speed, freq):
+    if freq == 0:
+        return "Division by zero"
     return speed / freq
 
 def escape_velocity(M, R):
@@ -761,10 +836,17 @@ def slg(singles, doubles, triples, home_runs, at_bats):
     ) / at_bats
 
 def translate(text, target="es"):
-    return GoogleTranslator(
-        source="auto",
-        target=target
-    ).translate(text)
+
+    try:
+
+        return GoogleTranslator(
+            source="auto",
+            target=target
+        ).translate(text)
+
+    except Exception as e:
+
+        return f"Translation error: {e}"
 
 def ops(singles, doubles, triples, home_runs,
         hits, walks, hbp, at_bats, sac_flies):
@@ -836,18 +918,39 @@ def dividend_yield(symbol):
         return f"Error: {e}"
 
 def market_cap(symbol):
-    import yfinance as yf
 
-    info = yf.Ticker(symbol).info
-    return float(info["marketCap"])
+    try:
+
+        info = yf.Ticker(symbol).info
+
+        value = info.get("marketCap")
+
+        if value is None:
+            return "No market cap available"
+
+        return float(value)
+
+    except Exception as e:
+
+        return f"Error: {e}"
 
 def stock_price(symbol):
-    import yfinance as yf
 
-    ticker = yf.Ticker(symbol.upper())
-    info = ticker.info
+    try:
 
-    return float(info["currentPrice"])
+        ticker = yf.Ticker(symbol.upper())
+        info = ticker.info
+
+        price = info.get("currentPrice")
+
+        if price is None:
+            return "Price unavailable"
+
+        return float(price)
+
+    except Exception as e:
+
+        return f"Error: {e}"
 
 def stock_metrics(ticker_symbol):
     try:
@@ -910,6 +1013,9 @@ def orbital_period(radius, central_mass):
 def luminosity(radius, temperature):
     sigma = 5.670374419e-8
     return 4 * math.pi * radius**2 * sigma * temperature**4
+
+def log(x):
+    return sp.N(sp.log(x))
 
 def redshift(emitted, observed):
     return (observed - emitted) / emitted
@@ -1068,18 +1174,6 @@ def molecules(moles_value):
 def matrix_transpose(A):
     return np.array(A).T
 
-def matrix_rank(A):
-    return sp.Matrix(A).rank()
-
-def matrix_trace(A):
-    return sp.Matrix(A).trace()
-
-def matrix_norm(A):
-    return float(sp.Matrix(A).norm())
-
-def matrix_rref(A):
-    return sp.Matrix(A).rref()[0]
-
 def matrix_nullspace(A):
     return sp.Matrix(A).nullspace()
 
@@ -1166,10 +1260,17 @@ def density_material(name):
 def youngs_modulus_material(name):
     return materials[name.lower()]["youngs_modulus"]
 
-def electrons(Z):
-    return Z
+def electrons(element_symbol):
+    if element_symbol not in periodic_table:
+        return "Unknown element"
+
+    return periodic_table[element_symbol]["number"]
 
 def ph(H):
+
+    if H <= 0:
+        return "Invalid concentration"
+
     return -math.log10(H)
 
 # ---------------- CHEMISTRY CONSTANTS ----------------
@@ -1182,9 +1283,11 @@ R = 8.314462618
 F = 96485.33212
 
 # ---------------- CALCULUS ----------------
+import sympy as sp
 
 def newton(expr, variable, guess):
-    return sp.nsolve(expr, var, guess)
+    return sp.nsolve(expr, variable, guess)
+
 
 def series_expansion(expr, var, point=0, order=6):
     return sp.series(expr, var, point, order)
@@ -1232,9 +1335,15 @@ def matrix_det(m):
 
 def matrix_inv(m):
 
-    arr = np.array(m, dtype=float)
+    try:
 
-    return np.linalg.inv(arr).tolist()
+        arr = np.array(m, dtype=float)
+
+        return np.linalg.inv(arr).tolist()
+
+    except np.linalg.LinAlgError:
+
+        return "Matrix is singular."
 
 def matrix_mul(a, b):
 
@@ -1260,11 +1369,15 @@ def angle_between(a, b):
     a = np.array(a, dtype=float)
     b = np.array(b, dtype=float)
 
-    cos_theta = np.dot(a, b) / (
-        np.linalg.norm(a) * np.linalg.norm(b)
-    )
+    na = np.linalg.norm(a)
+    nb = np.linalg.norm(b)
 
-    cos_theta = np.clip(cos_theta, -1.0, 1.0)
+    if na == 0 or nb == 0:
+        return "Zero-length vector"
+
+    cos_theta = np.dot(a, b)/(na*nb)
+
+    cos_theta = np.clip(cos_theta,-1,1)
 
     return float(np.arccos(cos_theta))
 
@@ -1273,6 +1386,20 @@ def derivative(expr):
     expr = sp.sympify(expr)
 
     return sp.diff(expr, x)
+
+dsolve = sp.dsolve
+Function = sp.Function
+Derivative = sp.Derivative
+Eq = sp.Eq
+
+def sinh(x):
+    return float(math.sinh(x))
+
+def cosh(x):
+    return float(math.cosh(x))
+
+def tanh(x):
+    return float(math.tanh(x))
 
 def matrix_rank(A):
     return sp.Matrix(A).rank()
@@ -1321,7 +1448,7 @@ def poly_fit(x_vals, y_vals, degree):
     return np.polyfit(x_vals, y_vals, degree).tolist()
 
 def nsolve_equation(expr, guess):
-    return sp.nsolve(sp.sympify(expr), guess)
+    return sp.nsolve(sp.sympify(expr), x, guess)
 
 def partial_x(expr):
     return sp.diff(sp.sympify(expr), x)
@@ -1346,9 +1473,6 @@ def newton_nsolve(expr, guess, iterations=10):
         val = val - expr.subs(x, val) / deriv.subs(x, val)
 
     return sp.N(val)
-
-def matrix_nullspace(A):
-    return scipy.linalg.null_space(A)
 
 def binary(n):
     return bin(n)
@@ -1415,8 +1539,25 @@ def ideal_gas_temperature(P, V, n):
     return (P * V) / (n * R)
 
 def ideal_gas_volume(n, T, P):
-    R = 8.314
+
+    if P == 0:
+        return "Division by zero"
+
     return (n * R * T) / P
+
+def ideal_gas_temperature(P, V, n):
+
+    if n == 0:
+        return "Division by zero"
+
+    return (P * V) / (n * R)
+
+def ideal_gas_moles(P, V, T):
+
+    if T == 0:
+        return "Division by zero"
+
+    return (P * V) / (R * T)
 
 def ideal_gas_moles(P, V, T):
     R = 8.314
@@ -1606,11 +1747,14 @@ def vigenere_decrypt(text, key):
 
     return result
 
-def xor_encrypt(text, key):
+def xor_encrypt(text,key):
 
     return ''.join(
-        chr(ord(c) ^ key)
-        for c in text
+        chr(
+            ord(c) ^
+            ord(key[i % len(key)])
+        )
+        for i,c in enumerate(text)
     )
 
 import base64
@@ -1707,9 +1851,6 @@ def stopwatch_stop():
 
     return elapsed
 
-def stopwatch_stop():
-    return time.time() - start_time
-
 def save_note(filename, text):
     with open(filename, "w") as f:
         f.write(text)
@@ -1739,38 +1880,6 @@ def draw_card():
 
 def roll(sides=6):
     return random.randint(1, sides)
-
-def run_tests():
-
-    tests = [
-
-        ("2+2", 4),
-        ("sqrt(81)", 9),
-        ("gcd(48,18)", 6),
-        ("det([[1,2],[3,4]])", -2),
-    ]
-
-    passed = 0
-
-    for expr, expected in tests:
-
-        try:
-
-            result = sp.sympify(
-                expr,
-                locals=variables
-            )
-
-            if float(result) == float(expected):
-                passed += 1
-
-        except:
-            pass
-
-    console.print(
-        f"[green]{passed}/{len(tests)} tests passed[/green]"
-    )
-angle_mode = "rad"
 
 def commands():
     for name in sorted(variables):
@@ -2059,41 +2168,6 @@ def polar_complex(r, theta):
         r * math.sin(theta)
     )
 
-def convert(value, from_unit, to_unit):
-
-    value = float(value)
-
-    conversions = {
-
-        ("kg", "lb"): 2.20462,
-        ("lb", "kg"): 0.453592,
-
-        ("m", "ft"): 3.28084,
-        ("ft", "m"): 0.3048,
-
-        ("m", "in"): 39.3701,
-        ("in", "m"): 0.0254,
-
-        ("km", "mi"): 0.621371,
-        ("mi", "km"): 1.60934,
-
-        ("g", "oz"): 0.035274,
-        ("oz", "g"): 28.3495,
-
-        ("l", "gal"): 0.264172,
-        ("gal", "l"): 3.78541,
-    }
-
-    if (from_unit, to_unit) in conversions:
-        return value * conversions[(from_unit, to_unit)]
-
-    elif from_unit == "c" and to_unit == "f":
-        return value * 9/5 + 32
-
-    elif from_unit == "f" and to_unit == "c":
-        return (value - 32) * 5/9
-
-    return "Unsupported conversion"
 
 def is_prime(n):
 
@@ -2245,27 +2319,33 @@ def convert(value, from_unit, to_unit):
 
     conversions = {
 
-        ("kg", "lb"): 2.20462,
-        ("lb", "kg"): 0.453592,
+        ("kg","lb"):2.20462,
+        ("lb","kg"):0.453592,
 
-        ("m", "ft"): 3.28084,
-        ("ft", "m"): 0.3048,
+        ("m","ft"):3.28084,
+        ("ft","m"):0.3048,
 
-        ("m", "in"): 39.3701,
-        ("in", "m"): 0.0254,
+        ("m","in"):39.3701,
+        ("in","m"):0.0254,
 
-        ("km", "mi"): 0.621371,
-        ("mi", "km"): 1.60934,
+        ("km","mi"):0.621371,
+        ("mi","km"):1.60934,
 
-        ("g", "oz"): 0.035274,
-        ("oz", "g"): 28.3495,
+        ("g","oz"):0.035274,
+        ("oz","g"):28.3495,
 
-        ("l", "gal"): 0.264172,
-        ("gal", "l"): 3.78541,
+        ("l","gal"):0.264172,
+        ("gal","l"):3.78541,
     }
 
-    if (from_unit, to_unit) in conversions:
-        return value * conversions[(from_unit, to_unit)]
+    from_unit = from_unit.lower()
+    to_unit = to_unit.lower()
+
+    if (from_unit,to_unit) in conversions:
+        return value * conversions[(from_unit,to_unit)]
+
+    elif from_unit == "c" and to_unit == "f":
+        return value * 9/5 + 32
 
     elif from_unit == "f" and to_unit == "c":
         return (value - 32) * 5/9
@@ -2284,8 +2364,8 @@ def to_octal(n):
 def randint(a, b):
     return random.randint(a, b)
 
-def randfloat():
-    return random.random()
+def randfloat(a=0,b=1):
+    return random.uniform(a,b)
 
 def choice(lst):
     return random.choice(lst)
@@ -2294,9 +2374,8 @@ def roots(expr):
     return sp.solve(sp.sympify(expr), x)
 
 def formula(name):
-
     return formulas.get(
-        name.lower(),
+        str(name).lower(),
         "Formula not found."
     )
 
@@ -2395,7 +2474,33 @@ def molecules(moles_value):
     return moles_value * Na
 
 def molarity(moles_value, liters):
+
+    if liters == 0:
+        return "Division by zero"
+
     return moles_value / liters
+
+def angle(a,b):
+    return angle_between(a,b)
+
+def integral_def(expr,a,b):
+    return definite_integral(expr,a,b)
+
+def solve_linear_system(A,b):
+
+    try:
+
+        A = np.array(A,dtype=float)
+        b = np.array(b,dtype=float)
+
+        return np.linalg.solve(A,b).tolist()
+
+    except Exception as e:
+
+        return f"Error: {e}"
+
+def matrix(data):
+    return sp.Matrix(data)
     
 def ideal_gas_volume(n, T, P):
     return (n * R * T) / P
@@ -2403,30 +2508,43 @@ def ideal_gas_volume(n, T, P):
 def velocity(distance, time):
     return distance / time
 
-def acceleration(velocity_change, time):
-    return velocity_change / time
+def acceleration(v1, v2, time):
+
+    if time == 0:
+        return "Division by zero"
+
+    return (v2 - v1) / time
 
 def density(mass, volume):
-    return mass / volume
-    if denominator == 0:
+
+    if volume == 0:
         return "Division by zero"
+
+    return mass / volume
 
 def pressure(force_value, area):
-    return force_value / area
-    if denominator == 0:
+
+    if area == 0:
         return "Division by zero"
 
+    return force_value / are
 
 def work(force_value, distance):
     return force_value * distance
 
-def power(work_value, time):
-    return work_value / time
+def power(work_done, time):
+
+    if time == 0:
+        return "Division by zero"
+
+    return work_done / time
 
 def frequency(period):
-    return 1 / period
-    if denominator == 0:
+
+    if period == 0:
         return "Division by zero"
+
+    return 1 / period
 
 def period(freq):
     return 1 / freq
@@ -2443,12 +2561,24 @@ def escape_velocity(mass, radius):
     )
 
 def resistance(v, i):
+
+    if i == 0:
+        return "Division by zero"
+
     return v / i
 
 def current(v, r):
+
+    if r == 0:
+        return "Division by zero"
+
     return v / r
 
 def capacitance(q, v):
+
+    if v == 0:
+        return "Division by zero"
+
     return q / v
 
 formulas = {
@@ -2872,9 +3002,17 @@ def material_info(name):
     return materials.get(name.lower(), "Material not found")
 
 def density_material(name):
+
+    if name.lower() not in materials:
+        return "Unknown material"
+
     return materials[name.lower()]["density"]
 
 def youngs_modulus_material(name):
+
+    if name.lower() not in materials:
+        return "Unknown material"
+
     return materials[name.lower()]["youngs_modulus"]
 
 def melting_material(name):
@@ -2905,17 +3043,8 @@ def matrix_norm(m):
 def matrix_rref(m):
     return sp.Matrix(m).rref()[0]
 
-def matrix_columnspace(m):
-    return sp.Matrix(m).columnspace()
-
-def matrix_rowspace(m):
-    return sp.Matrix(m).rowspace()
-
 def matrix_trace(m):
     return trace(m)
-
-def characteristic_polynomial(m):
-    return sp.Matrix(m).charpoly().as_expr()
 
 def quartiles(data):
 
@@ -3213,23 +3342,8 @@ def balance(reaction):
 
     # return balanced equation
 
-def moles_from_mass(
-    formula,
-    mass
-):
-
-    return (
-        mass /
-        molar_mass(formula)
-    )
-
-limiting_reactant(
-    "2H2 + O2 -> 2H2O",
-    {
-        "H2":4,
-        "O2":1
-    }
-)
+def moles_from_mass(mass, formula):
+    return mass / molar_mass(formula)
 
 def theoretical_yield(
     product_mm,
@@ -4901,7 +5015,7 @@ def ascii_plot(expr):
 
     expr = sp.sympify(expr)
 
-    f = sp.lambdify(x, expr, "math")
+    f = sp.lambdify(x, expr, modules=["numpy"])
 
     lines = []
 
@@ -4997,7 +5111,7 @@ languages = {
     }
 }
 
-x, y, z = sp.symbols('x y z')
+x, y, z = sp.symbols("x y z")
 
 variables = {
 
@@ -5005,13 +5119,16 @@ variables = {
     "selftest": selftest,
     "limiting_reactant": limiting_reactant,
     "element_count": element_count,
+    "E": sp.E,
     "percent_composition":
         percent_composition,
     "emc2": emc2,
     "mass_from_energy": mass_from_energy,
     "empirical_formula":
         empirical_formula,
-
+    "dsolve": sp.dsolve,"sinh": lambda x: float(sp.sinh(x)),
+    "cosh": lambda x: float(sp.cosh(x)),
+    "tanh": lambda x: float(sp.tanh(x)),
     "molecular_formula":
         molecular_formula,
 
@@ -5057,11 +5174,6 @@ variables = {
     "sec": sp.sec,
     "csc": sp.csc,
     "cot": sp.cot,
-
-    "sinh": sp.sinh,
-    "cosh": sp.cosh,
-    "tanh": sp.tanh,
-
     "radians": math.radians,
     "degrees": math.degrees,
 
@@ -5143,7 +5255,6 @@ variables = {
     "npv": npv,
     "matrix": matrix,
     "matmul": matrix_mul,
-    "transpose": transpose,
     "rank": matrix_rank,
     "density_material": density_material,
     "youngs_modulus_material": youngs_modulus_material,
@@ -5538,7 +5649,6 @@ variables = {
     # ================= SYSTEM =================
 
     "system_info": system_info,
-    "run_tests": run_tests,
 
     # ================= HELP =================
 
@@ -5575,7 +5685,7 @@ while True:
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.7. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.8. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
@@ -5657,13 +5767,11 @@ while True:
 
             xs = np.linspace(-10, 10, 1000)
 
-            ys = f(xs)
+            ys = np.real(np.array(ys, dtype=np.complex128))
 
             # Convert scalar output into array
             if np.isscalar(ys):
                 ys = np.full_like(xs, ys, dtype=float)
-
-            ys = np.array(ys, dtype=float)
 
             plt.figure(figsize=(8,5))
 
@@ -5757,9 +5865,33 @@ while True:
             console.print(f"[red]Assignment Error:[/red] {e}")
 
         continue
-    
+
     # ---------------- NORMAL EXPRESSIONS ----------------
     else:
+
+        # Handle text commands first
+        cmd = problem.strip().lower()
+
+        if cmd == "help":
+            show_help()
+            continue
+
+        elif cmd == "about":
+            show_about()
+            continue
+
+        elif cmd == "deg":
+            angle_mode = "deg"
+            console.print("[green]Angle mode set to degrees.[/green]")
+            continue
+
+        elif cmd == "rad":
+            angle_mode = "rad"
+            console.print("[green]Angle mode set to radians.[/green]")
+            continue
+
+        elif cmd in ("quit", "exit", "q"):
+            break
 
         try:
 
@@ -5769,6 +5901,11 @@ while True:
             )
 
             expr = sp.simplify(expr)
+
+            if expr.has(sp.zoo):
+                raise ZeroDivisionError(
+                    "Division by zero"
+                )
 
             if hasattr(expr, "evalf") and expr.is_number:
                 expr = expr.evalf()
@@ -5782,7 +5919,6 @@ while True:
             )
 
             variables["ans"] = expr
-
             history.append(f"{problem} = {expr}")
 
         except Exception as e:
