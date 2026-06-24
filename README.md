@@ -2,7 +2,7 @@ Welcome to Dave! This calculator is designed to be a high performance calculator
 
 
 
-Dave version 1.0.5 requires you to install the following dependencies so run the following commands (for MacOS only):
+Dave version 1.0.8 requires you to install the following dependencies so run the following commands (for MacOS only):
 
 
 
@@ -16,48 +16,6 @@ brew install python
 
 brew install pip3
 
-pip3 install --break-system-packages scipy
-
-pip3 install —-break-system-packages subprocess
-
-pip3 install —-break-system-packages importlib 
-
-pip3 install —-break-system-packages math
-
-pip3 install —-break-system-packages codecs
-
-pip3 install —-break-system-packages pandas
-
-pip3 install —-break-system-packages sympy 
-
-pip3 install —-break-system-packages numpy 
-
-pip3 install —-break-system-packages fractions
-
-pip3 install —-break-system-packages matplotlib
-
-pip3 install —-break-system-packages mpl toolkits.mplot3d
-
-pip3 install —-break-system-packages rich
-
-pip3 install —-break-system-packages statistics
-
-pip3 install —-break-system-packages random
-
-pip3 install —-break-system-packages readline 
-
-pip3 install —-break-system-packages pickle
-
-pip3 install --break-system-packages deep-translator
-
-pip3 install —-break-system-packages atextit
-
-pip3 install --break-system-packages mendeleev
-
-pip3 install -—break-system-packages datetime
-
-pip3 install -—break-system-packages re  
-
-pip3 install --break-system-packages yfinance
+pip3 install --break-system-packages sympy numpy matplotlib rich yfinance pandas scipy deep-translator mendeleev
 
 To run type python3 dave2.py into your terminal. If anything isn't working, please add it into the comments, and I will do my best to fix it. I you have any suggestions, I will also do my best to integrate them in, so you can put those in the comments too.
