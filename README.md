@@ -17,7 +17,7 @@ brew install python
 
 brew install pip3
 
-pip3 install --break-system-packages sympy numpy matplotlib rich yfinance pandas scipy deep-translator mendeleev
+python3 -m pip install --break-system-packages --upgrade sympy numpy scipy matplotlib rich pandas yfinance deep-translator mendeleev pyreadline3
 
 
 
@@ -25,20 +25,6 @@ For Windows OS:
 
 winget install Python.Python.3.11
 
-pip install sympy numpy matplotlib rich yfinance pandas scipy deep-translator mendeleev
-
-
-
-For Android OS: 
-
-
-pkg update -y
-
-pkg install -y python python-pip clang make element-desktop fftw libjpeg-turbo freetype libpng openssl
-
-pip install --upgrade pip
-
-pip install sympy numpy matplotlib rich yfinance pandas scipy deep-translator mendeleev
-
+python -m pip install --break-system-packages --upgrade pip sympy numpy scipy matplotlib rich pandas yfinance deep-translator mendeleev pyreadline3
 
 To run type python3 dave2.py into your terminal. If you downloaded the file, run cd Downloads first, and then run python3 dave2.py. If anything isn't working, please add it into the comments, and I will do my best to fix it. I you have any suggestions, I will also do my best to integrate them in, so you can put those in the comments too. The first run of Dave always takes the longest.
