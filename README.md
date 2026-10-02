@@ -144,4 +144,5 @@ Some lookup and geocoding features also require an internet connection and an av
 - **Unable to install via pip3 or python3:** Run mkdir -p ~/.config/pip && nano ~/.config/pip/pip.conf once in the file, paste this at the bottom:
 
 [global]
+
 break-system-packages = true
