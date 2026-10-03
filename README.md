@@ -141,8 +141,6 @@ Some lookup and geocoding features also require an internet connection and an av
 - **PowerShell blocks activation:** Use the process-scoped execution policy command in the Windows section.
 - **A pip package fails to build on Android:** Install its Termux package if one exists. Some optional packages do not support Android.
 - **A plot does not open on Linux or Android:** The headless backend creates no GUI window. Run Dave on a desktop with a graphical display for interactive plots
-- **Unable to install via pip3 or python3:** Run mkdir -p ~/.config/pip && nano ~/.config/pip/pip.conf once in the file, paste this at the bottom:
 
-[global]
 
-break-system-packages = true
+**If anything doesn't work, or you think something could be added, please put it in the comments, and I will do my best to fix/add it.**
