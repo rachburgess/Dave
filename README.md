@@ -166,4 +166,4 @@ Some lookup and geocoding features also require an internet connection and an av
 - **A plot does not open on Linux or Android:** The headless backend creates no GUI window. Run Dave on a desktop with a graphical display for interactive plots
 
 
-**If anything doesn't work, or you think something could be added, please put it in the comments, and I will do my best to fix/add it.**
+**If anything doesn't work, or you think something could be added, please put it in the comments (Dave Discussions), and I will do my best to fix/add it.**
