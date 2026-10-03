@@ -8,6 +8,7 @@ import random
 import sys
 sys.set_int_max_str_digits(0)
 
+import math
 from mendeleev import element
 
 
@@ -985,6 +986,9 @@ SCIENTIFIC_PACKAGES = {
         "import": "zarr",
         "category": "scientific_data",
     },
+    "gsw": {"distribution": "gsw", "import": "gsw", "category": "oceanography"},
+    "scikit_learn": {"distribution": "scikit-learn", "import": "sklearn", "category": "machine_learning"},
+    "wikipedia": {"distribution": "wikipedia", "import": "wikipedia", "category": "reference"},
 }
 
 
@@ -3631,7 +3635,6 @@ def astronomy_selftest(
 
     passed = 0
     failed = 0
-    skipped = 0
 
     if verbose:
 
@@ -3671,11 +3674,11 @@ def astronomy_selftest(
 
         else:
 
-            skipped += 1
+            failed += 1
 
             if verbose:
                 print(
-                    f"[SKIP] {name}"
+                    f"[FAIL] {name} (check could not run)"
                 )
 
                 if len(test) > 2:
@@ -3696,10 +3699,6 @@ def astronomy_selftest(
             f"Failed : {failed}"
         )
 
-        print(
-            f"Skipped: {skipped}"
-        )
-
         print("-" * 70)
         print()
 
@@ -3708,8 +3707,6 @@ def astronomy_selftest(
         "passed": passed,
 
         "failed": failed,
-
-        "skipped": skipped,
 
         "total": len(tests),
 
@@ -33991,6 +33988,1193 @@ def dipy_status(): return _package_status("dipy")
 def folium_status(): return _package_status("folium")
 def yt_status(): return _package_status("yt")
 
+# ==========================================================
+# ADDITIONAL SCIENCE CALCULATORS
+# ==========================================================
+
+def _science_finite_values(**values):
+    converted = {}
+    for name, value in values.items():
+        try:
+            number = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must be a finite number.") from exc
+        if not math.isfinite(number):
+            raise ValueError(f"{name} must be a finite number.")
+        converted[name] = number
+    return converted
+
+
+def epidemiology_2x2(exposed_cases, exposed_non_cases, unexposed_cases, unexposed_non_cases):
+    """Return risks, risk ratio, odds ratio, and risk difference from a 2x2 table."""
+    v = _science_finite_values(exposed_cases=exposed_cases, exposed_non_cases=exposed_non_cases,
+                               unexposed_cases=unexposed_cases, unexposed_non_cases=unexposed_non_cases)
+    if any(x < 0 for x in v.values()):
+        raise ValueError("2x2 table counts must be non-negative.")
+    ec, en, uc, un = v.values()
+    et, ut = ec + en, uc + un
+    er = ec / et if et else None
+    ur = uc / ut if ut else None
+    undefined = []
+    if et == 0:
+        undefined.append("exposed_risk: no exposed participants")
+    if ut == 0:
+        undefined.append("unexposed_risk: no unexposed participants")
+    if er is None or ur is None or ur == 0:
+        undefined.append("risk_ratio: requires both risks and a non-zero unexposed risk")
+    if en == 0 or uc == 0:
+        undefined.append("odds_ratio: denominator is zero")
+    return {"exposed_risk": er, "unexposed_risk": ur,
+            "risk_ratio": er / ur if er is not None and ur else None,
+            "odds_ratio": ec * un / (en * uc) if en and uc else None,
+            "risk_difference": er - ur if er is not None and ur is not None else None,
+            "undefined_measures": undefined}
+
+
+def weight_based_dose(dose_mg_per_kg, weight_kg):
+    """Calculate total dose in mg from mg/kg and body weight in kg."""
+    dose, weight = _science_finite_values(dose_mg_per_kg=dose_mg_per_kg,
+                                           weight_kg=weight_kg).values()
+    if dose < 0 or weight <= 0:
+        raise ValueError("Dose must be non-negative and weight positive.")
+    return dose * weight
+
+
+def convert_mass_concentration(value, from_unit, to_unit):
+    """Convert common mass concentrations among mg/L, g/L, mg/dL, and ug/mL."""
+    value = float(value)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError("Concentration must be finite and non-negative.")
+    factors = {"mg/l": 1.0, "g/l": 1000.0, "mg/dl": 10.0, "ug/ml": 1.0}
+    source, target = str(from_unit).strip().lower(), str(to_unit).strip().lower()
+    if source not in factors or target not in factors:
+        raise ValueError("Supported units: mg/L, g/L, mg/dL, and ug/mL.")
+    return value * factors[source] / factors[target]
+
+
+def glucose_mg_dl_to_mmol_l(value_mg_dl):
+    """Convert glucose from mg/dL to mmol/L using molar mass 180.156 g/mol."""
+    value = float(value_mg_dl)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError("Glucose must be finite and non-negative.")
+    return value / 18.0156
+
+
+def glucose_mmol_l_to_mg_dl(value_mmol_l):
+    """Convert glucose from mmol/L to mg/dL using molar mass 180.156 g/mol."""
+    value = float(value_mmol_l)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError("Glucose must be finite and non-negative.")
+    return value * 18.0156
+
+
+def cholesterol_mg_dl_to_mmol_l(value_mg_dl):
+    """Convert cholesterol from mg/dL to mmol/L using molar mass 386.65 g/mol."""
+    value = float(value_mg_dl)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError("Cholesterol must be finite and non-negative.")
+    return value / 38.665
+
+
+def creatinine_mg_dl_to_umol_l(value_mg_dl):
+    """Convert creatinine from mg/dL to umol/L using factor 88.4."""
+    value = float(value_mg_dl)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError("Creatinine must be finite and non-negative.")
+    return value * 88.4
+
+
+def heat_conduction_rate(conductivity_w_m_k, area_m2, temperature_difference_k, thickness_m):
+    """Calculate steady one-dimensional conduction heat rate in watts."""
+    k, area, delta_t, thickness = _science_finite_values(
+        conductivity_w_m_k=conductivity_w_m_k, area_m2=area_m2,
+        temperature_difference_k=temperature_difference_k, thickness_m=thickness_m).values()
+    if min(k, area, thickness) <= 0:
+        raise ValueError("Conductivity, area, and thickness must be positive.")
+    return k * area * delta_t / thickness
+
+
+def heat_convection_rate(heat_transfer_coefficient_w_m2_k, area_m2, surface_temp_k, fluid_temp_k):
+    """Calculate convective heat transfer in watts using Newton's cooling law."""
+    h, area, surface, fluid = _science_finite_values(
+        heat_transfer_coefficient_w_m2_k=heat_transfer_coefficient_w_m2_k,
+        area_m2=area_m2, surface_temp_k=surface_temp_k, fluid_temp_k=fluid_temp_k).values()
+    if h < 0 or area < 0 or surface < 0 or fluid < 0:
+        raise ValueError("h, area, and absolute temperatures must be non-negative.")
+    return h * area * (surface - fluid)
+
+
+def heat_radiation_rate(emissivity, area_m2, surface_temp_k, surroundings_temp_k):
+    """Calculate net radiative heat transfer in watts (Stefan-Boltzmann law)."""
+    e, area, surface, surrounding = _science_finite_values(
+        emissivity=emissivity, area_m2=area_m2, surface_temp_k=surface_temp_k,
+        surroundings_temp_k=surroundings_temp_k).values()
+    if not 0 <= e <= 1 or area < 0 or surface < 0 or surrounding < 0:
+        raise ValueError("Emissivity must be in [0,1]; area and temperatures non-negative.")
+    return e * 5.670374419e-8 * area * (surface**4 - surrounding**4)
+
+
+def carnot_efficiency(hot_temperature_k, cold_temperature_k):
+    """Calculate ideal Carnot efficiency as a fraction from absolute temperatures."""
+    hot, cold = _science_finite_values(hot_temperature_k=hot_temperature_k,
+                                       cold_temperature_k=cold_temperature_k).values()
+    if cold < 0 or hot <= 0 or hot < cold:
+        raise ValueError("Require hot temperature >= cold temperature >= 0 K and hot > 0 K.")
+    return 1 - cold / hot
+
+
+def volumetric_thermal_expansion(initial_volume_m3, expansion_coefficient_per_k,
+                                 temperature_change_k):
+    """Calculate volume change using the linearized volumetric expansion model."""
+    volume, coefficient, delta = _science_finite_values(
+        initial_volume_m3=initial_volume_m3,
+        expansion_coefficient_per_k=expansion_coefficient_per_k,
+        temperature_change_k=temperature_change_k).values()
+    if volume < 0 or coefficient < 0:
+        raise ValueError("Initial volume and expansion coefficient must be non-negative.")
+    return volume * coefficient * delta
+
+
+def ohms_law(voltage_v=None, current_a=None, resistance_ohm=None):
+    """Given two electrical values, return voltage (V), current (A), resistance (ohm), and power (W)."""
+    supplied = {"voltage_v": voltage_v, "current_a": current_a,
+                "resistance_ohm": resistance_ohm}
+    if sum(value is not None for value in supplied.values()) != 2:
+        raise ValueError("Provide exactly two of voltage_v, current_a, and resistance_ohm.")
+    values = {k: float(v) for k, v in supplied.items() if v is not None}
+    if any(not math.isfinite(v) for v in values.values()):
+        raise ValueError("Electrical values must be finite.")
+    if any(v < 0 for v in values.values()):
+        raise ValueError("Electrical values must be non-negative.")
+    if voltage_v is None:
+        current, resistance = values["current_a"], values["resistance_ohm"]
+        voltage = current * resistance
+    elif current_a is None:
+        voltage, resistance = values["voltage_v"], values["resistance_ohm"]
+        if resistance == 0:
+            raise ValueError("Cannot calculate current from zero resistance.")
+        current = voltage / resistance
+    else:
+        voltage, current = values["voltage_v"], values["current_a"]
+        if current == 0:
+            raise ValueError("Cannot calculate resistance from zero current.")
+        resistance = voltage / current
+    return {"voltage_v": voltage, "current_a": current,
+            "resistance_ohm": resistance, "power_w": voltage * current}
+
+
+def rc_time_constant(resistance_ohm, capacitance_f):
+    """Calculate RC circuit time constant in seconds."""
+    resistance, capacitance = _science_finite_values(
+        resistance_ohm=resistance_ohm, capacitance_f=capacitance_f).values()
+    if resistance < 0 or capacitance < 0:
+        raise ValueError("Resistance and capacitance must be non-negative.")
+    return resistance * capacitance
+
+
+def equivalent_resistance(resistances_ohm, connection="series"):
+    """Calculate equivalent resistance for ideal series or parallel resistors."""
+    values = [float(x) for x in resistances_ohm]
+    if not values or any(not math.isfinite(x) or x <= 0 for x in values):
+        raise ValueError("Provide positive finite resistor values.")
+    mode = str(connection).strip().lower()
+    if mode == "series":
+        return sum(values)
+    if mode == "parallel":
+        return 1 / sum(1 / x for x in values)
+    raise ValueError("connection must be 'series' or 'parallel'.")
+
+
+def number_needed_to_treat(control_event_rate, treatment_event_rate):
+    """Return NNT when treatment reduces the event rate."""
+    control, treatment = _science_finite_values(control_event_rate=control_event_rate,
+                                                  treatment_event_rate=treatment_event_rate).values()
+    if not (0 <= control <= 1 and 0 <= treatment <= 1):
+        raise ValueError("Event rates must be between 0 and 1.")
+    reduction = control - treatment
+    if reduction <= 0:
+        raise ValueError("NNT requires a lower event rate with treatment.")
+    return math.ceil(1 / reduction)
+
+
+def drug_concentration_after_dose(initial_concentration, half_life_hours, elapsed_hours):
+    """Estimate first-order concentration decay using a stated half-life."""
+    initial, half_life, elapsed = _science_finite_values(
+        initial_concentration=initial_concentration, half_life_hours=half_life_hours,
+        elapsed_hours=elapsed_hours).values()
+    if initial < 0 or half_life <= 0 or elapsed < 0:
+        raise ValueError("Concentration/time must be non-negative and half-life positive.")
+    return initial * 0.5 ** (elapsed / half_life)
+
+
+def mean_arterial_pressure(systolic_mmhg, diastolic_mmhg):
+    """Estimate mean arterial pressure as DBP + (SBP-DBP)/3, in mmHg."""
+    systolic, diastolic = _science_finite_values(
+        systolic_mmhg=systolic_mmhg, diastolic_mmhg=diastolic_mmhg).values()
+    if diastolic < 0 or systolic < diastolic:
+        raise ValueError("Require systolic pressure >= non-negative diastolic pressure.")
+    return diastolic + (systolic - diastolic) / 3
+
+
+def _validated_counts(counts):
+    values = [float(x) for x in counts]
+    if not values or any(not math.isfinite(x) or x < 0 for x in values):
+        raise ValueError("counts must be a non-empty sequence of finite non-negative values.")
+    return values
+
+
+def shannon_diversity(counts, base=math.e):
+    """Calculate Shannon diversity from non-negative taxon counts."""
+    values, base = _validated_counts(counts), float(base)
+    if not math.isfinite(base) or base <= 0 or base == 1:
+        raise ValueError("base must be positive and not equal to 1.")
+    total = sum(values)
+    return 0.0 if total == 0 else -sum((x / total) * math.log(x / total, base) for x in values if x)
+
+
+def simpson_diversity(counts):
+    """Calculate Simpson diversity (1 - sum of squared relative abundances)."""
+    values = _validated_counts(counts)
+    total = sum(values)
+    return 0.0 if total == 0 else 1 - sum((x / total) ** 2 for x in values)
+
+
+def pielou_evenness(counts):
+    """Calculate Pielou's evenness; returns zero for fewer than two taxa."""
+    values = _validated_counts(counts)
+    richness = sum(x > 0 for x in values)
+    return 0.0 if richness <= 1 else shannon_diversity(values) / math.log(richness)
+
+
+def logistic_population(initial_population, growth_rate, carrying_capacity, time):
+    """Calculate population at time t under the logistic growth model."""
+    n0, rate, capacity, elapsed = _science_finite_values(
+        initial_population=initial_population, growth_rate=growth_rate,
+        carrying_capacity=carrying_capacity, time=time).values()
+    if n0 <= 0 or capacity <= 0 or n0 > capacity:
+        raise ValueError("Population and carrying capacity must be positive; initial population <= capacity.")
+    return capacity / (1 + ((capacity - n0) / n0) * math.exp(-rate * elapsed))
+
+
+def reynolds_number(density_kg_m3, velocity_m_s, characteristic_length_m, dynamic_viscosity_pa_s):
+    """Calculate dimensionless Reynolds number using SI inputs."""
+    density, velocity, length, viscosity = _science_finite_values(
+        density_kg_m3=density_kg_m3, velocity_m_s=velocity_m_s,
+        characteristic_length_m=characteristic_length_m,
+        dynamic_viscosity_pa_s=dynamic_viscosity_pa_s).values()
+    if density <= 0 or length < 0 or viscosity <= 0:
+        raise ValueError("Density/viscosity must be positive and length non-negative.")
+    return density * abs(velocity) * length / viscosity
+
+
+def control_natural_frequency(mass_kg, stiffness_n_m):
+    """Calculate undamped natural angular frequency in rad/s."""
+    mass, stiffness = _science_finite_values(mass_kg=mass_kg, stiffness_n_m=stiffness_n_m).values()
+    if mass <= 0 or stiffness <= 0:
+        raise ValueError("Mass and stiffness must be positive.")
+    return math.sqrt(stiffness / mass)
+
+
+def control_damping_ratio(mass_kg, damping_n_s_m, stiffness_n_m):
+    """Calculate dimensionless damping ratio for a second-order system."""
+    mass, damping, stiffness = _science_finite_values(
+        mass_kg=mass_kg, damping_n_s_m=damping_n_s_m, stiffness_n_m=stiffness_n_m).values()
+    if mass <= 0 or stiffness <= 0 or damping < 0:
+        raise ValueError("Mass/stiffness must be positive and damping non-negative.")
+    return damping / (2 * math.sqrt(mass * stiffness))
+
+
+def cantilever_tip_deflection(point_load_n, length_m, youngs_modulus_pa, second_moment_m4):
+    """Calculate end deflection for an end-loaded uniform cantilever (SI)."""
+    load, length, modulus, inertia = _science_finite_values(
+        point_load_n=point_load_n, length_m=length_m, youngs_modulus_pa=youngs_modulus_pa,
+        second_moment_m4=second_moment_m4).values()
+    if length < 0 or modulus <= 0 or inertia <= 0:
+        raise ValueError("Length must be non-negative; modulus and inertia positive.")
+    return load * length ** 3 / (3 * modulus * inertia)
+
+
+def beam_bending_stress(moment_nm, second_moment_m4, distance_m):
+    """Calculate elastic beam bending stress in pascals from SI inputs."""
+    moment, inertia, distance = _science_finite_values(
+        moment_nm=moment_nm, second_moment_m4=second_moment_m4,
+        distance_m=distance_m).values()
+    if inertia <= 0 or distance < 0:
+        raise ValueError("Second moment must be positive and distance non-negative.")
+    return abs(moment) * distance / inertia
+
+
+def gsw_seawater_properties(practical_salinity, temperature_c, pressure_dbar=0, longitude=0, latitude=0):
+    """Return TEOS-10 salinity, temperature, density, and sound speed using optional gsw."""
+    gsw = load_scientific_package("gsw")
+    sp, temp, pressure, lon, lat = _science_finite_values(
+        practical_salinity=practical_salinity, temperature_c=temperature_c,
+        pressure_dbar=pressure_dbar, longitude=longitude, latitude=latitude).values()
+    if sp < 0 or pressure < 0 or not -90 <= lat <= 90:
+        raise ValueError("Salinity/pressure must be non-negative and latitude in [-90, 90].")
+    sa = gsw.SA_from_SP(sp, pressure, lon, lat)
+    ct = gsw.CT_from_t(sa, temp, pressure)
+    return {"absolute_salinity_g_kg": float(sa), "conservative_temperature_c": float(ct),
+            "density_kg_m3": float(gsw.rho(sa, ct, pressure)),
+            "sound_speed_m_s": float(gsw.sound_speed(sa, ct, pressure))}
+
+
+def gsw_status():
+    """Report whether the optional seawater package is available."""
+    return _package_status("gsw")
+
+
+def sklearn_train_test_split(features, targets, test_size=0.2, random_state=42, stratify=False):
+    """Split data with scikit-learn; returns X_train, X_test, y_train, y_test."""
+    load_scientific_package("scikit_learn")
+    from sklearn.model_selection import train_test_split
+    features, targets = _validate_sklearn_data(features, targets)
+    _validate_test_size(test_size, len(targets))
+    return train_test_split(
+        features, targets, test_size=test_size, random_state=random_state,
+        stratify=targets if stratify else None)
+
+
+def sklearn_classification_report(y_true, y_pred):
+    """Return scikit-learn classification metrics as a dictionary."""
+    load_scientific_package("scikit_learn")
+    from sklearn.metrics import classification_report
+    if len(y_true) == 0 or len(y_true) != len(y_pred):
+        raise ValueError("y_true and y_pred must have the same non-zero length.")
+    return classification_report(y_true, y_pred, output_dict=True, zero_division=0)
+
+
+def sklearn_linear_regression(features, targets, test_size=0.2, random_state=42):
+    """Fit a linear regression model and return the model, predictions, RMSE, and R²."""
+    load_scientific_package("scikit_learn")
+    from sklearn.linear_model import LinearRegression
+    from sklearn.metrics import mean_squared_error, r2_score
+    from sklearn.model_selection import train_test_split
+    features, targets = _validate_sklearn_data(features, targets)
+    _validate_test_size(test_size, len(targets))
+    x_train, x_test, y_train, y_test = train_test_split(
+        features, targets, test_size=test_size, random_state=random_state)
+    model = LinearRegression().fit(x_train, y_train)
+    predictions = model.predict(x_test)
+    mse = mean_squared_error(y_test, predictions)
+    return {"model": model, "predictions": predictions, "rmse": math.sqrt(float(mse)),
+            "r2": float(r2_score(y_test, predictions))}
+
+
+def scikit_learn_status():
+    """Report whether optional scikit-learn is available."""
+    return _package_status("scikit_learn")
+
+
+def _validate_sklearn_data(features, targets):
+    """Use sklearn's own array checks to enforce aligned finite numeric data."""
+    from sklearn.utils.validation import check_X_y
+    try:
+        x, y = check_X_y(features, targets, dtype="numeric")
+    except Exception as exc:
+        raise ValueError(f"features/targets must be aligned finite numeric data: {exc}") from exc
+    return x, y
+
+
+def _validate_test_size(test_size, sample_count):
+    if isinstance(test_size, bool) or not isinstance(test_size, (int, float)):
+        raise ValueError("test_size must be a fraction in (0, 1) or an integer sample count.")
+    if isinstance(test_size, float):
+        if not math.isfinite(test_size) or not 0 < test_size < 1:
+            raise ValueError("Fractional test_size must be in (0, 1).")
+        test_count = math.ceil(test_size * sample_count)
+    else:
+        test_count = test_size
+    if test_count < 1 or test_count >= sample_count:
+        raise ValueError("test_size must leave at least one training and one test sample.")
+
+
+def sklearn_logistic_classification(features, targets, test_size=0.2, random_state=42):
+    """Fit logistic classification and return model, predictions, accuracy and report."""
+    load_scientific_package("scikit_learn")
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import accuracy_score
+    from sklearn.model_selection import train_test_split
+    features, targets = _validate_sklearn_data(features, targets)
+    _validate_test_size(test_size, len(targets))
+    if len(set(targets.tolist())) < 2:
+        raise ValueError("Logistic classification requires at least two target classes.")
+    x_train, x_test, y_train, y_test = train_test_split(
+        features, targets, test_size=test_size, random_state=random_state, stratify=targets)
+    model = LogisticRegression(max_iter=1000).fit(x_train, y_train)
+    predictions = model.predict(x_test)
+    return {"model": model, "predictions": predictions,
+            "accuracy": float(accuracy_score(y_test, predictions)),
+            "report": sklearn_classification_report(y_test, predictions)}
+
+
+def _gsw_selftest_probe():
+    """Check that optional GSW calls return physically plausible seawater values."""
+    result = gsw_seawater_properties(35, 15, 0, -40, 30)
+    assert 30 < result["absolute_salinity_g_kg"] < 40
+    assert 1000 < result["density_kg_m3"] < 1100
+    assert 1000 < result["sound_speed_m_s"] < 2000
+    return result
+
+
+def _sklearn_selftest_probe():
+    """Exercise optional classification, splitting, and regression end to end."""
+    features = [[float(i)] for i in range(20)]
+    labels = [0 if i < 10 else 1 for i in range(20)]
+    x_train, x_test, y_train, y_test = sklearn_train_test_split(
+        features, labels, test_size=0.25, random_state=7, stratify=True)
+    assert len(x_train) == 15 and len(x_test) == len(y_test) == 5
+    report = sklearn_classification_report([0, 1], [0, 1])
+    assert report["accuracy"] == 1.0
+    classifier = sklearn_logistic_classification(features, labels, test_size=0.25, random_state=7)
+    assert 0 <= classifier["accuracy"] <= 1
+    regression = sklearn_linear_regression(features, [3 * i + 2 for i in range(20)],
+                                           test_size=0.25, random_state=7)
+    assert regression["rmse"] < 1e-8 and regression["r2"] > 0.999
+    return {"split": len(x_test), "classification_accuracy": classifier["accuracy"],
+            "regression_r2": regression["r2"]}
+
+
+# ==========================================================
+# ADDITIONAL APPLIED SCIENCE CALCULATORS
+# ==========================================================
+
+def michaelis_menten_velocity(vmax, substrate_concentration, km):
+    """Calculate enzyme velocity Vmax*[S]/(Km+[S]) in the input velocity units."""
+    vmax, substrate, km = _science_finite_values(
+        vmax=vmax, substrate_concentration=substrate_concentration, km=km).values()
+    if vmax < 0 or substrate < 0 or km <= 0:
+        raise ValueError("Vmax and substrate must be non-negative; Km must be positive.")
+    return vmax * substrate / (km + substrate)
+
+
+def henderson_hasselbalch(pka, base_concentration, acid_concentration):
+    """Calculate buffer pH from pKa and conjugate base/acid concentrations."""
+    pka, base, acid = _science_finite_values(
+        pka=pka, base_concentration=base_concentration,
+        acid_concentration=acid_concentration).values()
+    if base <= 0 or acid <= 0:
+        raise ValueError("Base and acid concentrations must be positive.")
+    return pka + math.log10(base / acid)
+
+
+def beer_lambert_absorbance(molar_absorptivity_l_mol_cm, concentration_mol_l,
+                            path_length_cm):
+    """Calculate absorbance A = epsilon*c*l using L mol⁻¹ cm⁻¹, mol/L, and cm."""
+    epsilon, concentration, length = _science_finite_values(
+        molar_absorptivity_l_mol_cm=molar_absorptivity_l_mol_cm,
+        concentration_mol_l=concentration_mol_l, path_length_cm=path_length_cm).values()
+    if min(epsilon, concentration, length) < 0:
+        raise ValueError("Absorptivity, concentration, and path length must be non-negative.")
+    return epsilon * concentration * length
+
+
+def osmotic_pressure_kpa(molarity_mol_l, temperature_k, vanthoff_factor=1):
+    """Estimate ideal osmotic pressure in kPa (molarity mol/L, temperature K)."""
+    molarity, temperature, factor = _science_finite_values(
+        molarity_mol_l=molarity_mol_l, temperature_k=temperature_k,
+        vanthoff_factor=vanthoff_factor).values()
+    if molarity < 0 or temperature <= 0 or factor <= 0:
+        raise ValueError("Molarity must be non-negative; temperature and factor positive.")
+    return factor * molarity * 8.31446261815324 * temperature
+
+
+def magnus_relative_humidity(temperature_c, dewpoint_c):
+    """Estimate relative humidity (%) with the Magnus saturation-vapor-pressure formula."""
+    temperature, dewpoint = _science_finite_values(
+        temperature_c=temperature_c, dewpoint_c=dewpoint_c).values()
+    if temperature <= -243.5 or dewpoint <= -243.5:
+        raise ValueError("Magnus equation temperatures must be above -243.5 C.")
+    es_t = math.exp(17.67 * temperature / (temperature + 243.5))
+    es_d = math.exp(17.67 * dewpoint / (dewpoint + 243.5))
+    return 100 * es_d / es_t
+
+
+def magnus_dewpoint_c(temperature_c, relative_humidity_percent):
+    """Estimate dew point in Celsius with the Magnus formula and RH in (0, 100]."""
+    temperature, rh = _science_finite_values(
+        temperature_c=temperature_c,
+        relative_humidity_percent=relative_humidity_percent).values()
+    if temperature <= -243.5 or not 0 < rh <= 100:
+        raise ValueError("Temperature must exceed -243.5 C and RH be in (0, 100].")
+    gamma = math.log(rh / 100) + 17.67 * temperature / (243.5 + temperature)
+    return 243.5 * gamma / (17.67 - gamma)
+
+
+def isa_pressure_altitude_pa(altitude_m):
+    """Estimate standard-atmosphere pressure in Pa from altitude in the troposphere."""
+    altitude, = _science_finite_values(altitude_m=altitude_m).values()
+    if not -500 <= altitude <= 11000:
+        raise ValueError("This troposphere approximation supports altitudes from -500 to 11000 m.")
+    return 101325 * (1 - 2.25577e-5 * altitude) ** 5.25588
+
+
+def hydrostatic_pressure_kpa(fluid_density_kg_m3, depth_m, gravity_m_s2=9.80665):
+    """Calculate gauge hydrostatic pressure in kPa from density, depth, and gravity."""
+    density, depth, gravity = _science_finite_values(
+        fluid_density_kg_m3=fluid_density_kg_m3, depth_m=depth_m,
+        gravity_m_s2=gravity_m_s2).values()
+    if density <= 0 or depth < 0 or gravity <= 0:
+        raise ValueError("Density/gravity must be positive and depth non-negative.")
+    return density * gravity * depth / 1000
+
+
+def geothermal_temperature_c(surface_temperature_c, geothermal_gradient_c_per_km,
+                             depth_m):
+    """Estimate subsurface temperature using a constant geothermal gradient."""
+    surface, gradient, depth = _science_finite_values(
+        surface_temperature_c=surface_temperature_c,
+        geothermal_gradient_c_per_km=geothermal_gradient_c_per_km,
+        depth_m=depth_m).values()
+    if depth < 0:
+        raise ValueError("Depth must be non-negative.")
+    return surface + gradient * depth / 1000
+
+
+def signal_rms(samples):
+    """Calculate root-mean-square amplitude of a non-empty finite sample sequence."""
+    values = [float(x) for x in samples]
+    if not values or any(not math.isfinite(x) for x in values):
+        raise ValueError("samples must be a non-empty sequence of finite values.")
+    return math.sqrt(sum(x * x for x in values) / len(values))
+
+
+def signal_peak_to_peak(samples):
+    """Return the peak-to-peak range of a non-empty finite sample sequence."""
+    values = [float(x) for x in samples]
+    if not values or any(not math.isfinite(x) for x in values):
+        raise ValueError("samples must be a non-empty sequence of finite values.")
+    return max(values) - min(values)
+
+
+def signal_snr_db(signal_samples, noise_samples):
+    """Calculate signal-to-noise ratio in dB from signal and noise sample sequences."""
+    signal = signal_rms([float(x) for x in signal_samples])
+    noise = signal_rms([float(x) for x in noise_samples])
+    if signal <= 0 or noise <= 0:
+        raise ValueError("Signal and noise RMS must both be positive.")
+    return 20 * math.log10(signal / noise)
+
+
+def zero_crossing_rate(samples):
+    """Return the fraction of adjacent sample pairs that cross or touch zero."""
+    values = [float(x) for x in samples]
+    if len(values) < 2 or any(not math.isfinite(x) for x in values):
+        raise ValueError("Provide at least two finite samples.")
+    crossings = sum((left >= 0) != (right >= 0)
+                    for left, right in zip(values, values[1:]))
+    return crossings / (len(values) - 1)
+
+
+def sample_rate_hz(sample_count, duration_s):
+    """Calculate sample rate in Hz from sample count and elapsed seconds."""
+    count, duration = _science_finite_values(
+        sample_count=sample_count, duration_s=duration_s).values()
+    if count <= 0 or duration <= 0 or not count.is_integer():
+        raise ValueError("Sample count must be a positive integer and duration positive.")
+    return count / duration
+
+
+def sound_intensity_level_db(intensity_w_m2, reference_w_m2=1e-12):
+    """Calculate sound intensity level in dB relative to a positive reference intensity."""
+    intensity, reference = _science_finite_values(
+        intensity_w_m2=intensity_w_m2, reference_w_m2=reference_w_m2).values()
+    if intensity <= 0 or reference <= 0:
+        raise ValueError("Intensity and reference intensity must be positive.")
+    return 10 * math.log10(intensity / reference)
+
+
+def sound_intensity_from_db(level_db, reference_w_m2=1e-12):
+    """Convert dB intensity level and reference intensity to W/m²."""
+    level, reference = _science_finite_values(
+        level_db=level_db, reference_w_m2=reference_w_m2).values()
+    if reference <= 0:
+        raise ValueError("Reference intensity must be positive.")
+    return reference * 10 ** (level / 10)
+
+
+def capacitor_energy_j(capacitance_f, voltage_v):
+    """Calculate stored capacitor energy in joules (C in farads, V in volts)."""
+    capacitance, voltage = _science_finite_values(
+        capacitance_f=capacitance_f, voltage_v=voltage_v).values()
+    if capacitance < 0:
+        raise ValueError("Capacitance must be non-negative.")
+    return 0.5 * capacitance * voltage ** 2
+
+
+def inductor_energy_j(inductance_h, current_a):
+    """Calculate stored inductor energy in joules (L in henries, I in amperes)."""
+    inductance, current = _science_finite_values(
+        inductance_h=inductance_h, current_a=current_a).values()
+    if inductance < 0:
+        raise ValueError("Inductance must be non-negative.")
+    return 0.5 * inductance * current ** 2
+
+
+def capacitive_reactance_ohm(frequency_hz, capacitance_f):
+    """Calculate capacitive reactance magnitude in ohms."""
+    frequency, capacitance = _science_finite_values(
+        frequency_hz=frequency_hz, capacitance_f=capacitance_f).values()
+    if frequency <= 0 or capacitance <= 0:
+        raise ValueError("Frequency and capacitance must be positive.")
+    return 1 / (2 * math.pi * frequency * capacitance)
+
+
+def inductive_reactance_ohm(frequency_hz, inductance_h):
+    """Calculate inductive reactance magnitude in ohms."""
+    frequency, inductance = _science_finite_values(
+        frequency_hz=frequency_hz, inductance_h=inductance_h).values()
+    if frequency <= 0 or inductance <= 0:
+        raise ValueError("Frequency and inductance must be positive.")
+    return 2 * math.pi * frequency * inductance
+
+
+def thermal_diffusivity_m2_s(conductivity_w_m_k, density_kg_m3,
+                             specific_heat_j_kg_k):
+    """Calculate thermal diffusivity alpha = k/(rho*cp) in m²/s."""
+    conductivity, density, specific_heat = _science_finite_values(
+        conductivity_w_m_k=conductivity_w_m_k, density_kg_m3=density_kg_m3,
+        specific_heat_j_kg_k=specific_heat_j_kg_k).values()
+    if conductivity <= 0 or density <= 0 or specific_heat <= 0:
+        raise ValueError("Conductivity, density, and specific heat must be positive.")
+    return conductivity / (density * specific_heat)
+
+
+def cohens_d(group_a, group_b):
+    """Calculate pooled-standard-deviation Cohen's d for two numeric samples."""
+    a, b = [float(x) for x in group_a], [float(x) for x in group_b]
+    if min(len(a), len(b)) < 2 or any(not math.isfinite(x) for x in a + b):
+        raise ValueError("Each group needs at least two finite observations.")
+    va = sum((x - sum(a) / len(a)) ** 2 for x in a) / (len(a) - 1)
+    vb = sum((x - sum(b) / len(b)) ** 2 for x in b) / (len(b) - 1)
+    pooled = math.sqrt(((len(a) - 1) * va + (len(b) - 1) * vb) /
+                       (len(a) + len(b) - 2))
+    if pooled == 0:
+        raise ValueError("Cohen's d is undefined when pooled standard deviation is zero.")
+    return (sum(a) / len(a) - sum(b) / len(b)) / pooled
+
+
+def standard_error_of_mean(samples):
+    """Calculate sample standard error of the mean for at least two observations."""
+    values = [float(x) for x in samples]
+    if len(values) < 2 or any(not math.isfinite(x) for x in values):
+        raise ValueError("Provide at least two finite observations.")
+    mean = sum(values) / len(values)
+    sd = math.sqrt(sum((x - mean) ** 2 for x in values) / (len(values) - 1))
+    return sd / math.sqrt(len(values))
+
+
+# ==========================================================
+# ADDITIONAL SCIENCE AREAS AND WIKIPEDIA SEARCH
+# ==========================================================
+
+def hargreaves_samani_et0_mm_day(tmax_c, tmin_c, tmean_c, ra_mj_m2_day):
+    """Estimate reference evapotranspiration (mm/day) by Hargreaves-Samani."""
+    tmax, tmin, tmean, ra = _science_finite_values(
+        tmax_c=tmax_c, tmin_c=tmin_c, tmean_c=tmean_c,
+        ra_mj_m2_day=ra_mj_m2_day).values()
+    if tmax < tmin or ra < 0:
+        raise ValueError("Require Tmax >= Tmin and non-negative extraterrestrial radiation.")
+    return max(0.0, 0.0023 * (tmean + 17.8) * math.sqrt(tmax - tmin) * ra)
+
+
+def soil_porosity_fraction(bulk_density_kg_m3, particle_density_kg_m3=2650):
+    """Estimate soil porosity as 1 - bulk density / particle density."""
+    bulk, particle = _science_finite_values(
+        bulk_density_kg_m3=bulk_density_kg_m3,
+        particle_density_kg_m3=particle_density_kg_m3).values()
+    if bulk < 0 or particle <= 0 or bulk > particle:
+        raise ValueError("Require 0 <= bulk density <= positive particle density.")
+    return 1 - bulk / particle
+
+
+def soil_water_content_fraction(water_volume_m3, soil_volume_m3):
+    """Calculate volumetric soil-water content as water volume / soil volume."""
+    water, soil = _science_finite_values(
+        water_volume_m3=water_volume_m3, soil_volume_m3=soil_volume_m3).values()
+    if water < 0 or soil <= 0 or water > soil:
+        raise ValueError("Require 0 <= water volume <= positive soil volume.")
+    return water / soil
+
+
+def food_moisture_percent(wet_sample_mass_g, dry_matter_mass_g, basis="wet"):
+    """Calculate food moisture percentage on wet or dry basis."""
+    wet, dry = _science_finite_values(
+        wet_sample_mass_g=wet_sample_mass_g,
+        dry_matter_mass_g=dry_matter_mass_g).values()
+    if wet <= 0 or dry < 0 or dry > wet:
+        raise ValueError("Require wet mass > 0 and 0 <= dry matter <= wet mass.")
+    water = wet - dry
+    basis = str(basis).strip().lower()
+    if basis == "wet":
+        return 100 * water / wet
+    if basis == "dry":
+        if dry == 0:
+            raise ValueError("Dry-basis moisture is undefined when dry matter is zero.")
+        return 100 * water / dry
+    raise ValueError("basis must be 'wet' or 'dry'.")
+
+
+def water_activity_from_equilibrium_rh(relative_humidity_percent):
+    """Estimate water activity as equilibrium relative humidity / 100."""
+    rh, = _science_finite_values(
+        relative_humidity_percent=relative_humidity_percent).values()
+    if not 0 <= rh <= 100:
+        raise ValueError("Relative humidity must be between 0 and 100 percent.")
+    return rh / 100
+
+
+def diagnostic_test_metrics(true_positive, false_positive, true_negative, false_negative):
+    """Return sensitivity, specificity, PPV, NPV, accuracy, and undefined-measure notes."""
+    values = _science_finite_values(true_positive=true_positive,
+        false_positive=false_positive, true_negative=true_negative,
+        false_negative=false_negative)
+    if any(v < 0 for v in values.values()):
+        raise ValueError("Confusion-matrix counts must be non-negative.")
+    tp, fp, tn, fn = values.values()
+    def ratio(numerator, denominator):
+        return numerator / denominator if denominator else None
+    undefined = []
+    formulas = {
+        "sensitivity": (tp, tp + fn), "specificity": (tn, tn + fp),
+        "positive_predictive_value": (tp, tp + fp),
+        "negative_predictive_value": (tn, tn + fn),
+        "accuracy": (tp + tn, tp + fp + tn + fn),
+    }
+    result = {}
+    for name, (num, den) in formulas.items():
+        result[name] = ratio(num, den)
+        if den == 0:
+            undefined.append(f"{name}: denominator is zero")
+    result["undefined_measures"] = undefined
+    return result
+
+
+def co2_from_oxidized_carbon_kg(carbon_mass_kg, oxidation_fraction=1.0):
+    """Estimate direct CO2 mass from oxidized elemental carbon mass (44/12 ratio)."""
+    carbon, oxidation = _science_finite_values(
+        carbon_mass_kg=carbon_mass_kg,
+        oxidation_fraction=oxidation_fraction).values()
+    if carbon < 0 or not 0 <= oxidation <= 1:
+        raise ValueError("Carbon mass must be non-negative and oxidation fraction in [0,1].")
+    return carbon * oxidation * (44 / 12)
+
+
+def seismic_energy_j(moment_magnitude):
+    """Estimate earthquake radiated energy in joules from magnitude (empirical relation)."""
+    magnitude, = _science_finite_values(moment_magnitude=moment_magnitude).values()
+    return 10 ** (1.5 * magnitude + 4.8)
+
+
+def photon_energy_j(wavelength_m):
+    """Calculate photon energy in joules from vacuum wavelength in meters."""
+    wavelength, = _science_finite_values(wavelength_m=wavelength_m).values()
+    if wavelength <= 0:
+        raise ValueError("Wavelength must be positive.")
+    return 6.62607015e-34 * 299792458 / wavelength
+
+
+def snell_refracted_angle_deg(n_incident, n_transmitted, incident_angle_deg):
+    """Calculate refracted angle from Snell's law; raises on total internal reflection."""
+    n1, n2, angle = _science_finite_values(
+        n_incident=n_incident, n_transmitted=n_transmitted,
+        incident_angle_deg=incident_angle_deg).values()
+    if n1 <= 0 or n2 <= 0 or not 0 <= angle < 90:
+        raise ValueError("Indices must be positive and incidence angle in [0, 90) degrees.")
+    sine_out = n1 * math.sin(math.radians(angle)) / n2
+    if sine_out > 1:
+        raise ValueError("Total internal reflection: no real refracted angle.")
+    return math.degrees(math.asin(sine_out))
+
+
+def thin_lens_image_distance_m(focal_length_m, object_distance_m):
+    """Calculate signed image distance for a thin lens using the Cartesian lens equation."""
+    focal, obj = _science_finite_values(
+        focal_length_m=focal_length_m,
+        object_distance_m=object_distance_m).values()
+    if focal == 0 or obj == 0:
+        raise ValueError("Focal length and object distance must be non-zero.")
+    denominator = 1 / focal - 1 / obj
+    if denominator == 0:
+        raise ValueError("Image is at infinity for this focal/object-distance combination.")
+    return 1 / denominator
+
+
+def stress_from_force_pa(force_n, area_m2):
+    """Calculate normal stress in pascals from force in N and area in m²."""
+    force, area = _science_finite_values(force_n=force_n, area_m2=area_m2).values()
+    if area <= 0:
+        raise ValueError("Area must be positive.")
+    return force / area
+
+
+def engineering_strain(initial_length_m, final_length_m):
+    """Calculate engineering strain (final - initial) / initial."""
+    initial, final = _science_finite_values(
+        initial_length_m=initial_length_m,
+        final_length_m=final_length_m).values()
+    if initial <= 0 or final < 0:
+        raise ValueError("Initial length must be positive and final length non-negative.")
+    return (final - initial) / initial
+
+
+def factor_of_safety(strength_pa, working_stress_pa):
+    """Calculate factor of safety as material strength / absolute working stress."""
+    strength, stress = _science_finite_values(
+        strength_pa=strength_pa, working_stress_pa=working_stress_pa).values()
+    if strength <= 0 or stress == 0:
+        raise ValueError("Strength must be positive and working stress non-zero.")
+    return strength / abs(stress)
+
+
+def sensible_heat_j(mass_kg, specific_heat_j_kg_k, temperature_change_k):
+    """Calculate sensible heat Q = m cp delta-T in joules."""
+    mass, heat_capacity, delta = _science_finite_values(
+        mass_kg=mass_kg, specific_heat_j_kg_k=specific_heat_j_kg_k,
+        temperature_change_k=temperature_change_k).values()
+    if mass < 0 or heat_capacity < 0:
+        raise ValueError("Mass and specific heat must be non-negative.")
+    return mass * heat_capacity * delta
+
+
+def latent_heat_j(mass_kg, latent_heat_j_kg):
+    """Calculate phase-change heat in joules from mass and specific latent heat."""
+    mass, latent = _science_finite_values(
+        mass_kg=mass_kg, latent_heat_j_kg=latent_heat_j_kg).values()
+    if mass < 0 or latent < 0:
+        raise ValueError("Mass and latent heat must be non-negative.")
+    return mass * latent
+
+
+def nernst_potential_v(standard_potential_v, temperature_k, electrons_transferred,
+                       reaction_quotient):
+    """Calculate Nernst potential in volts (dimensionless reaction quotient)."""
+    e0, temperature, electrons, quotient = _science_finite_values(
+        standard_potential_v=standard_potential_v, temperature_k=temperature_k,
+        electrons_transferred=electrons_transferred,
+        reaction_quotient=reaction_quotient).values()
+    if temperature <= 0 or electrons <= 0 or quotient <= 0:
+        raise ValueError("Temperature, electron count, and reaction quotient must be positive.")
+    return e0 - (8.31446261815324 * temperature / (electrons * 96485.33212)) * math.log(quotient)
+
+
+def solution_dilution_molarity(stock_molarity, stock_volume_l, final_volume_l):
+    """Calculate diluted concentration in mol/L using C1*V1=C2*V2."""
+    stock, aliquot, final = _science_finite_values(
+        stock_molarity=stock_molarity, stock_volume_l=stock_volume_l,
+        final_volume_l=final_volume_l).values()
+    if stock < 0 or aliquot < 0 or final <= 0 or aliquot > final:
+        raise ValueError("Require non-negative stock and aliquot, positive final volume, and aliquot <= final volume.")
+    return stock * aliquot / final
+
+
+def percent_yield(actual_yield, theoretical_yield):
+    """Calculate percent chemical yield from consistent actual/theoretical units."""
+    actual, theoretical = _science_finite_values(
+        actual_yield=actual_yield,
+        theoretical_yield=theoretical_yield).values()
+    if actual < 0 or theoretical <= 0:
+        raise ValueError("Actual yield must be non-negative and theoretical yield positive.")
+    return 100 * actual / theoretical
+
+
+def gini_coefficient(values):
+    """Calculate the Gini coefficient for a non-negative numeric sample."""
+    data = sorted(float(x) for x in values)
+    if not data or any(not math.isfinite(x) or x < 0 for x in data):
+        raise ValueError("Provide a non-empty sequence of finite non-negative values.")
+    total = sum(data)
+    if total == 0:
+        return 0.0
+    n = len(data)
+    return (2 * sum((i + 1) * x for i, x in enumerate(data)) / (n * total)
+            - (n + 1) / n)
+
+
+def population_exponential_projection(initial_population, growth_rate_per_time,
+                                      elapsed_time):
+    """Project population under continuous exponential growth/decline."""
+    initial, rate, elapsed = _science_finite_values(
+        initial_population=initial_population,
+        growth_rate_per_time=growth_rate_per_time,
+        elapsed_time=elapsed_time).values()
+    if initial < 0 or elapsed < 0:
+        raise ValueError("Initial population and elapsed time must be non-negative.")
+    return initial * math.exp(rate * elapsed)
+
+
+def wikipedia_status():
+    """Report whether the optional wikipedia package is available."""
+    return _package_status("wikipedia")
+
+
+def _wikipedia_call(language, operation):
+    """Serialize Wikipedia requests and configure API etiquette headers."""
+    import json
+    import os
+    import threading
+    wikipedia = load_scientific_package("wikipedia")
+    language = str(language or globals().get("language", "en")).strip().lower()
+    lock = getattr(wikipedia, "_dave_request_lock", None)
+    if lock is None:
+        lock = threading.RLock()
+        wikipedia._dave_request_lock = lock
+    with lock:
+        wikipedia.set_rate_limiting(True)
+        user_agent = os.environ.get(
+            "DAVE_WIKIPEDIA_USER_AGENT",
+            "DaveScientificCalculator/1.0 (https://www.mediawiki.org/wiki/API:Etiquette)")
+        set_user_agent = getattr(wikipedia, "set_user_agent", None)
+        if not callable(set_user_agent):
+            raise RuntimeError(
+                "The installed wikipedia package cannot set a User-Agent. "
+                "Upgrade it with: python -m pip install --upgrade wikipedia")
+        # wikipedia.languages() also makes an API request, so set the header first.
+        set_user_agent(user_agent)
+        wikipedia.set_lang(language)
+        try:
+            if language not in wikipedia.languages():
+                raise ValueError(f"Unsupported Wikipedia language code: {language}")
+            return operation(wikipedia)
+        except wikipedia.exceptions.DisambiguationError as exc:
+            return {"error": "disambiguation", "query": str(exc.title),
+                    "options": list(exc.options)}
+        except wikipedia.exceptions.PageError as exc:
+            return {"error": "page_not_found", "message": str(exc)}
+        except Exception as exc:
+            if isinstance(exc, json.JSONDecodeError) or type(exc).__name__ == "JSONDecodeError":
+                raise RuntimeError(
+                    "Wikipedia returned an empty or non-JSON response. Dave sent an "
+                    "identifying User-Agent; check network access or set "
+                    "DAVE_WIKIPEDIA_USER_AGENT to an identifying application string "
+                    "with contact information.") from exc
+            raise
+
+
+def wikipedia_search(query, results=5, language=None):
+    """Search Wikipedia and return matching article titles (requires network/package)."""
+    query = str(query).strip()
+    if not query:
+        raise ValueError("query must not be empty.")
+    if isinstance(results, bool) or not isinstance(results, int) or not 1 <= results <= 20:
+        raise ValueError("results must be an integer from 1 to 20.")
+    return _wikipedia_call(language, lambda wiki: wiki.search(query, results=results))
+
+
+def wikipedia_summary(query, sentences=3, language=None):
+    """Fetch a short Wikipedia article summary (requires network/package)."""
+    query = str(query).strip()
+    if not query:
+        raise ValueError("query must not be empty.")
+    if isinstance(sentences, bool) or not isinstance(sentences, int) or not 1 <= sentences <= 10:
+        raise ValueError("sentences must be an integer from 1 to 10.")
+    return _wikipedia_call(language, lambda wiki: wiki.summary(
+        query, sentences=sentences, auto_suggest=False, redirect=True))
+
+
+def wikipedia_page_info(title, language=None, include_content=False):
+    """Return Wikipedia page title, URL, id and summary; optionally include full text."""
+    title = str(title).strip()
+    if not title:
+        raise ValueError("title must not be empty.")
+    if not isinstance(include_content, bool):
+        raise ValueError("include_content must be True or False.")
+    def fetch(wiki):
+        page = wiki.page(title, auto_suggest=False, redirect=True)
+        result = {"title": page.title, "url": page.url, "pageid": page.pageid,
+                  "summary": page.summary}
+        if include_content:
+            result["content"] = page.content
+        return result
+    return _wikipedia_call(language, fetch)
+
+
+def wikipedia_article(title, language=None):
+    """Fetch and return the complete text of a Wikipedia article."""
+    title = str(title).strip()
+    if not title:
+        raise ValueError("title must not be empty.")
+    def fetch(wiki):
+        page = wiki.page(title, auto_suggest=False, redirect=True)
+        return page.content
+    return _wikipedia_call(language, fetch)
+
+
+def _format_wikipedia_article(title, content, width=88):
+    """Render Wikipedia article text as readable, wrapped terminal sections."""
+    import re
+    import textwrap
+    width = max(36, int(width))
+    title = str(title).strip() or "Wikipedia Article"
+    text = str(content or "")
+    text = re.sub(r"<ref\b[^>]*>.*?</ref\s*>", "", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\[\[([^]|]+)\|([^]]+)\]\]", r"\2", text)
+    text = re.sub(r"\[\[([^]]+)\]\]", r"\1", text)
+    text = re.sub(r"'{2,3}(.+?)'{2,3}", r"\1", text)
+    output = [title, "=" * min(len(title), width), ""]
+    paragraph = []
+
+    def flush_paragraph():
+        if paragraph:
+            joined = " ".join(part.strip() for part in paragraph if part.strip())
+            if joined:
+                output.extend(textwrap.wrap(joined, width=width))
+                output.append("")
+            paragraph.clear()
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        heading = re.fullmatch(r"={2,6}\s*(.*?)\s*={2,6}", line)
+        if heading:
+            flush_paragraph()
+            label = heading.group(1).strip()
+            if label:
+                output.extend((label, "─" * min(len(label), width), ""))
+            continue
+        if not line:
+            flush_paragraph()
+            continue
+        bullet = re.match(r"^([*#]+)\s*(.+)$", line)
+        if bullet:
+            flush_paragraph()
+            depth, item = bullet.groups()
+            prefix = ("• " if depth[0] == "*" else "1. ") + item.strip()
+            wrapped = textwrap.wrap(prefix, width=width, subsequent_indent="  ")
+            output.extend(wrapped or [prefix])
+            output.append("")
+            continue
+        paragraph.append(line)
+    flush_paragraph()
+    return "\n".join(output).rstrip()
+
+
+def _wikipedia_article_format_selftest():
+    """Check that article sections, paragraphs, and lists are formatted."""
+    sample = """Lead sentence.
+
+== Mechanism ==
+
+A long explanatory paragraph with enough words to wrap cleanly across a narrow test width.
+
+* First item
+* Second item"""
+    rendered = _format_wikipedia_article("Muon", sample, width=40)
+    lines = rendered.splitlines()
+    if not rendered.startswith("Muon\n====") or "Mechanism\n" not in rendered:
+        raise AssertionError("Article title or section headings were not formatted.")
+    if "== Mechanism ==" in rendered or "• First item" not in rendered:
+        raise AssertionError("Wiki heading or list markup was not converted.")
+    if any(len(line) > 40 for line in lines):
+        raise AssertionError("Article paragraphs were not wrapped to the requested width.")
+    return "article headings, paragraphs, and lists formatted"
+
+
+def _execute_wikipedia_command(expression):
+    """Execute a literal-only Wikipedia function call and format its result."""
+    import ast
+    node = ast.parse(expression, mode="eval").body
+    allowed = {"wikipedia_search", "wikipedia_summary", "wikipedia_page_info", "wikipedia_article"}
+    if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name) or node.func.id not in allowed:
+        raise ValueError("Use wikipedia_search(...), wikipedia_summary(...), wikipedia_page_info(...), or wikipedia_article(...).")
+    try:
+        args = [ast.literal_eval(arg) for arg in node.args]
+        kwargs = {kw.arg: ast.literal_eval(kw.value) for kw in node.keywords if kw.arg is not None}
+    except (ValueError, TypeError) as exc:
+        raise ValueError("Wikipedia command arguments must be literal strings, numbers, or booleans.") from exc
+    result = globals()[node.func.id](*args, **kwargs)
+    if node.func.id == "wikipedia_article":
+        article_title = args[0] if args else kwargs.get("title", "Wikipedia Article")
+        return _format_wikipedia_article(article_title, result)
+    if isinstance(result, list):
+        return "\n".join(f"{index}. {title}" for index, title in enumerate(result, 1)) or "No articles found."
+    if isinstance(result, dict):
+        if result.get("error") == "disambiguation":
+            options = "\n".join(f"  - {title}" for title in result.get("options", []))
+            return f"Ambiguous page: {result.get('query', '')}\n{options}"
+        return "\n".join(f"{key}: {value}" for key, value in result.items())
+    return str(result)
+
+
+def _wikipedia_command_selftest():
+    """Check the calculator command path without making network requests."""
+    name = "wikipedia_search"
+    original = globals()[name]
+    original_article = globals()["wikipedia_article"]
+    globals()[name] = lambda query, results=5, language=None: ["Artificial photosynthesis", "Photosynthesis"]
+    try:
+        output = _execute_wikipedia_command('wikipedia_search("photosynthesis", results=2)')
+        if "1. Artificial photosynthesis" not in output or "2. Photosynthesis" not in output:
+            raise AssertionError("Wikipedia search result formatting failed.")
+        globals()["wikipedia_article"] = lambda title, language=None: "Lead sentence.\n\n== Mechanism ==\n\nSecond paragraph."
+        article = _execute_wikipedia_command('wikipedia_article("Muon")')
+        if not article.startswith("Muon\n====") or "Mechanism\n" not in article or "Second paragraph." not in article:
+            raise AssertionError("Wikipedia full-article command did not format complete article text.")
+        try:
+            _execute_wikipedia_command('wikipedia_search(__import__("os"))')
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Non-literal Wikipedia arguments should be rejected.")
+        return "Wikipedia command dispatch and result formatting passed"
+    finally:
+        globals()[name] = original
+        globals()["wikipedia_article"] = original_article
+
+
+def _wikipedia_exact_title_selftest():
+    """Ensure summary and page requests avoid fuzzy title substitution."""
+    class FakePage:
+        title = "Muon"
+        url = "https://en.wikipedia.org/wiki/Muon"
+        pageid = 123
+        summary = "Muon article summary"
+        content = "Muon article paragraph one.\n\nMuon article paragraph two."
+
+    class FakeWiki:
+        summary_options = None
+        page_options = None
+        def summary(self, title, **options):
+            self.summary_options = options
+            return f"Summary for {title}"
+        def page(self, title, **options):
+            self.page_options = options
+            return FakePage()
+
+    fake = FakeWiki()
+    original = globals()["_wikipedia_call"]
+    globals()["_wikipedia_call"] = lambda language, operation: operation(fake)
+    try:
+        if wikipedia_summary("Muon") != "Summary for Muon":
+            raise AssertionError("Summary lookup changed the requested title.")
+        if fake.summary_options.get("auto_suggest") is not False:
+            raise AssertionError("Summary lookup must disable fuzzy suggestions.")
+        info = wikipedia_page_info("Muon")
+        if info.get("title") != "Muon" or fake.page_options.get("auto_suggest") is not False:
+            raise AssertionError("Page lookup must preserve the requested title.")
+        full_text = wikipedia_article("Muon")
+        if full_text != FakePage.content or fake.page_options.get("auto_suggest") is not False:
+            raise AssertionError("Full-article lookup must return the article content for the requested title.")
+        return "exact-title summary, page, and full-article lookups passed"
+    finally:
+        globals()["_wikipedia_call"] = original
+
+
+def _wikipedia_input_selftest():
+    """Check validation without making any external request."""
+    checks = ((lambda: wikipedia_search("", results=1), "empty query"),
+              (lambda: wikipedia_search("science", results=21), "too many results"),
+              (lambda: wikipedia_summary("science", sentences=0), "invalid sentence count"),
+              (lambda: wikipedia_page_info(" "), "empty page title"))
+    for operation, label in checks:
+        try:
+            operation()
+        except ValueError:
+            continue
+        raise AssertionError(f"Wikipedia validation did not reject {label}.")
+    return "input validation passed; network not contacted"
+
+
 def selftest():
     """
     Dave master self-test.
@@ -33998,7 +35182,7 @@ def selftest():
     This version is deliberately defensive:
     - Never directly references an undefined Dave function.
     - Uses globals() to find functions that actually exist.
-    - Separates PASS, FAIL, and SKIP.
+    - Reports PASS or FAIL for every requested check.
     - Does not use multiline eval() tests.
     - Does not execute quit/exit/help commands.
     - Tests the functions actually present in Dave.
@@ -34009,7 +35193,6 @@ def selftest():
 
     passed = 0
     failed = 0
-    skipped = 0
 
     results = []
 
@@ -34074,75 +35257,20 @@ def selftest():
     # ==========================================================
 
     def test_function(name, function_name, *args, **kwargs):
-        nonlocal skipped
-
-        function = globals().get(function_name)
-
-        if not callable(function):
-
-            skipped += 1
-
-            results.append(
-                (
-                    "SKIP",
-                    name,
-                    f"{function_name} is not defined"
-                )
-            )
-
-            print(
-                f"[SKIP] {name} "
-                f"(function {function_name} is not defined)"
-            )
-
-            return None
-
-        return test(
-            name,
-            function,
-            *args,
-            **kwargs
-        )
-
-    def test_network_function(name, function_name, *args, **kwargs):
-        """Treat unavailable external network services as skipped checks."""
-        nonlocal passed, failed, skipped
-
         function = globals().get(function_name)
         if not callable(function):
-            return test_function(name, function_name, *args, **kwargs)
+            def missing_function():
+                raise NameError(f"{function_name} is not defined")
+            return test(name, missing_function)
+        return test(name, function, *args, **kwargs)
 
-        try:
-            result = function(*args, **kwargs)
-        except Exception as exc:
-            network_failure = False
-            cause = exc
-            while cause is not None:
-                if type(cause).__name__ in (
-                    "GeocoderUnavailable",
-                    "GeocoderTimedOut",
-                    "TimeoutError",
-                    "gaierror",
-                ):
-                    network_failure = True
-                    break
-                cause = cause.__cause__ or cause.__context__
-
-            if network_failure:
-                skipped += 1
-                results.append(("SKIP", name, str(exc)))
-                print(f"[SKIP] {name} (network service unavailable)")
-                return None
-
-            failed += 1
-            results.append(("FAIL", name, exc))
-            print(f"[FAIL] {name}: {type(exc).__name__}: {exc}")
-            return None
-
-        passed += 1
-        results.append(("PASS", name, result))
-        print(f"[PASS] {name}")
-        return result
+    def test_optional_package(name, package_name, function):
+        availability = _package_status(package_name)
+        if not availability.get("available"):
+            def unavailable_package():
+                raise ImportError(f"optional package {package_name} is unavailable")
+            return test(name, unavailable_package)
+        return test(name, function)
 
     # ==========================================================
     # BASIC PYTHON / MATH
@@ -34916,13 +36044,6 @@ def selftest():
         1000
     )
 
-    test_network_function(
-        "geopy reverse",
-        "geopy_reverse",
-        40.7128,
-        -74.0060
-    )
-
     # ==========================================================
     # ATOMISTIC / MATERIALS
     # ==========================================================
@@ -35136,6 +36257,91 @@ def selftest():
         lambda: minute_ventilation(500, 12),
         6.0
     )
+
+    test_value("epidemiology risk ratio", lambda: epidemiology_2x2(10, 90, 5, 95)["risk_ratio"], 2.0)
+    test_value("number needed to treat", lambda: number_needed_to_treat(0.2, 0.1), 10)
+    test_value("first-order drug decay", lambda: drug_concentration_after_dose(100, 5, 10), 25)
+    test_value("mean arterial pressure", lambda: mean_arterial_pressure(120, 80), 93.33333333333333)
+    test_value("Shannon diversity", lambda: shannon_diversity([1, 1]), math.log(2))
+    test_value("Simpson diversity", lambda: simpson_diversity([1, 1]), 0.5)
+    test_value("Pielou evenness", lambda: pielou_evenness([1, 1]), 1.0)
+    test_value("logistic population at initial time", lambda: logistic_population(10, 0.1, 100, 0), 10)
+    test_value("Reynolds number", lambda: reynolds_number(1000, 1, 0.1, 0.001), 100000)
+    test_value("control natural frequency", lambda: control_natural_frequency(1, 4), 2)
+    test_value("control damping ratio", lambda: control_damping_ratio(1, 2, 1), 1)
+    test_value("cantilever tip deflection", lambda: cantilever_tip_deflection(100, 2, 200e9, 1e-6), 0.0013333333333333333)
+    test_value("beam bending stress", lambda: beam_bending_stress(100, 1e-6, 0.01), 1e6)
+    test_function("GSW oceanography status", "gsw_status")
+    test_function("scikit-learn status", "scikit_learn_status")
+    test_value("weight-based dose", lambda: weight_based_dose(5, 20), 100)
+    test_value("mass concentration units", lambda: convert_mass_concentration(1, "g/L", "mg/dL"), 100)
+    test_value("glucose unit conversion", lambda: glucose_mg_dl_to_mmol_l(90), 90 / 18.0156)
+    test_value("cholesterol unit conversion", lambda: cholesterol_mg_dl_to_mmol_l(193.325), 5)
+    test_value("creatinine unit conversion", lambda: creatinine_mg_dl_to_umol_l(1), 88.4)
+    test_value("conduction heat rate", lambda: heat_conduction_rate(2, 3, 10, 0.5), 120)
+    test_value("convection heat rate", lambda: heat_convection_rate(10, 2, 310, 300), 200)
+    test_value("radiative heat rate", lambda: heat_radiation_rate(1, 1, 400, 300), 5.670374419e-8 * (400**4 - 300**4))
+    test_value("ideal gas pressure", lambda: ideal_gas_pressure(1, 300, 0.02494338785445972), 100000)
+    test_value("Carnot efficiency", lambda: carnot_efficiency(600, 300), 0.5)
+    test_value("thermal expansion", lambda: volumetric_thermal_expansion(1, 1e-3, 10), 0.01)
+    test_value("Ohm's law", lambda: ohms_law(voltage_v=12, resistance_ohm=6)["current_a"], 2)
+    test_value("RC time constant", lambda: rc_time_constant(1000, 1e-6), 0.001)
+    test_value("parallel resistance", lambda: equivalent_resistance([10, 10], "parallel"), 5)
+    test_optional_package("scikit-learn integrations", "scikit_learn", _sklearn_selftest_probe)
+
+    test_value("Michaelis-Menten velocity", lambda: michaelis_menten_velocity(10, 2, 2), 5)
+    test_value("Henderson-Hasselbalch pH", lambda: henderson_hasselbalch(7.4, 1, 1), 7.4)
+    test_value("Beer-Lambert absorbance", lambda: beer_lambert_absorbance(1000, 0.001, 1), 1)
+    test_value("ideal osmotic pressure", lambda: osmotic_pressure_kpa(0.1, 300), 249.4338785445972)
+    test_value("Magnus humidity", lambda: magnus_relative_humidity(20, 10), 52.5, tolerance=0.02)
+    test_value("Magnus dew point", lambda: magnus_dewpoint_c(20, magnus_relative_humidity(20, 10)), 10)
+    test_value("standard atmosphere pressure", lambda: isa_pressure_altitude_pa(0), 101325)
+    test_value("hydrostatic pressure", lambda: hydrostatic_pressure_kpa(1000, 10), 98.0665)
+    test_value("geothermal temperature", lambda: geothermal_temperature_c(15, 25, 2000), 65)
+    test_value("signal RMS", lambda: signal_rms([-1, 1]), 1)
+    test_value("signal peak-to-peak", lambda: signal_peak_to_peak([-2, 3]), 5)
+    test_value("signal SNR", lambda: signal_snr_db([1, 1], [0.1, -0.1]), 20)
+    test_value("zero crossing rate", lambda: zero_crossing_rate([-1, 1, -1]), 1)
+    test_value("sample rate", lambda: sample_rate_hz(10, 2), 5)
+    test_value("sound intensity level", lambda: sound_intensity_level_db(1e-6), 60)
+    test_value("sound intensity conversion", lambda: sound_intensity_from_db(60), 1e-6)
+    test_value("capacitor stored energy", lambda: capacitor_energy_j(0.01, 10), 0.5)
+    test_value("inductor stored energy", lambda: inductor_energy_j(0.5, 2), 1)
+    test_value("capacitive reactance", lambda: capacitive_reactance_ohm(50, 100e-6), 1 / (2 * math.pi * 50 * 100e-6))
+    test_value("inductive reactance", lambda: inductive_reactance_ohm(50, 0.1), 2 * math.pi * 50 * 0.1)
+    test_value("thermal diffusivity", lambda: thermal_diffusivity_m2_s(0.6, 1000, 4000), 1.5e-7)
+    test_value("Cohen's d", lambda: cohens_d([2, 4], [1, 3]), 1 / math.sqrt(2))
+    test_value("standard error", lambda: standard_error_of_mean([1, 2, 3, 4]), math.sqrt(5 / 3) / 2)
+
+    test_value("Hargreaves-Samani ET0", lambda: hargreaves_samani_et0_mm_day(25, 15, 20, 20), 5.498568395500778)
+    test_value("soil porosity", lambda: soil_porosity_fraction(1325, 2650), 0.5)
+    test_value("soil water fraction", lambda: soil_water_content_fraction(0.2, 0.5), 0.4)
+    test_value("food wet-basis moisture", lambda: food_moisture_percent(100, 80), 20)
+    test_value("food dry-basis moisture", lambda: food_moisture_percent(100, 80, "dry"), 25)
+    test_value("water activity", lambda: water_activity_from_equilibrium_rh(65), 0.65)
+    test_value("diagnostic sensitivity", lambda: diagnostic_test_metrics(80, 10, 90, 20)["sensitivity"], 0.8)
+    test_value("CO2 from oxidized carbon", lambda: co2_from_oxidized_carbon_kg(12), 44)
+    test_value("seismic energy estimate", lambda: seismic_energy_j(0), 10 ** 4.8)
+    test_value("photon energy", lambda: photon_energy_j(500e-9), 6.62607015e-34 * 299792458 / 500e-9)
+    test_value("Snell refraction", lambda: snell_refracted_angle_deg(1, 1.5, 30), 19.47122063449069)
+    test_value("thin lens image distance", lambda: thin_lens_image_distance_m(0.1, 0.3), 0.15)
+    test_value("normal stress", lambda: stress_from_force_pa(100, 0.001), 100000)
+    test_value("engineering strain", lambda: engineering_strain(1, 1.1), 0.1)
+    test_value("factor of safety", lambda: factor_of_safety(200e6, 50e6), 4)
+    test_value("sensible heat", lambda: sensible_heat_j(2, 4200, 10), 84000)
+    test_value("latent heat", lambda: latent_heat_j(2, 334000), 668000)
+    test_value("Nernst equilibrium potential", lambda: nernst_potential_v(0.75, 298.15, 2, 1), 0.75)
+    test_value("solution dilution", lambda: solution_dilution_molarity(1, 0.01, 0.1), 0.1)
+    test_value("chemical percent yield", lambda: percent_yield(8, 10), 80)
+    test_value("Gini coefficient", lambda: gini_coefficient([0, 0, 1, 1]), 0.5)
+    test_value("exponential population projection", lambda: population_exponential_projection(100, 0.1, math.log(2) / 0.1), 200)
+    test_function("Wikipedia package status", "wikipedia_status")
+    test("Wikipedia input validation (no network)", _wikipedia_input_selftest)
+    test("Wikipedia command dispatch (no network)", _wikipedia_command_selftest)
+    test("Wikipedia exact-title lookup (no network)", _wikipedia_exact_title_selftest)
+    test("Wikipedia article formatting (no network)", _wikipedia_article_format_selftest)
+    test("Expression command evaluation (expected values)", _expression_command_selftest)
+    test("Dave language selection (five languages)", _language_selftest)
 
     # ==========================================================
     # ADVANCED NUMERICAL PACKAGE STATUS
@@ -35418,7 +36624,7 @@ def selftest():
     # FINAL SUMMARY
     # ==========================================================
 
-    total = passed + failed + skipped
+    total = passed + failed
 
     print()
     print("=" * 78)
@@ -35427,7 +36633,6 @@ def selftest():
     print()
     print(f"Passed : {passed}")
     print(f"Failed : {failed}")
-    print(f"Skipped: {skipped}")
     print(f"Total  : {total}")
     print()
 
@@ -35444,7 +36649,6 @@ def selftest():
     return {
         "passed": passed,
         "failed": failed,
-        "skipped": skipped,
         "total": total,
         "results": results,
     }
@@ -35904,7 +37108,11 @@ def slg(singles, doubles, triples, home_runs, at_bats):
         4 * home_runs
     ) / at_bats
 
-def translate(text, target="es"):
+def translate(text, target=None):
+
+    target = target or language
+    target = {"zh": "zh-CN", "jp": "ja", "mandarin": "zh-CN"}.get(
+        str(target).strip().lower(), target)
 
     try:
 
@@ -37208,7 +38416,12 @@ def conjugate(z):
     return sp.conjugate(z)
 
 def ideal_gas_pressure(n,T,V):
-    return (n*8.314*T)/V
+    """Calculate ideal-gas pressure in pascals from mol, kelvin, and m³."""
+    n, temperature, volume = _science_finite_values(
+        moles=n, temperature_k=T, volume_m3=V).values()
+    if n < 0 or temperature <= 0 or volume <= 0:
+        raise ValueError("Moles must be non-negative; temperature and volume positive.")
+    return n * 8.31446261815324 * temperature / volume
 
 def protons(s):
     return atomic_number(s)
@@ -38649,6 +39862,18 @@ def show_help():
 =========================================================
 DAVE — COMPLETE EXPANDED HELP LIST
 =========================================================
+
+LANGUAGE SETTINGS
+-----------------
+Select one of the five interface languages with:
+    lang en       English
+    lang es       Spanish
+    lang ja       Japanese
+    lang zh       Mandarin Chinese
+    lang fr       French
+You can also use: english(), spanish(), japanese(), mandarin(), french().
+Wikipedia searches use the selected language by default. Mathematical expression
+and scientific function names remain English.
 
 ======================== BASIC MATH ========================
 
@@ -40229,8 +41454,157 @@ cardiac_output(heart_rate_bpm, stroke_volume_ml)
 minute_ventilation(tidal_volume_ml, respiratory_rate_bpm)
     Calculate minute ventilation in L/min.
 
+CLINICAL / EPIDEMIOLOGY
+
+epidemiology_2x2(exposed_cases, exposed_non_cases, unexposed_cases, unexposed_non_cases)
+    Calculate risks, risk ratio, odds ratio, and risk difference.
+number_needed_to_treat(control_event_rate, treatment_event_rate)
+    Calculate NNT when treatment reduces the event rate.
+drug_concentration_after_dose(initial_concentration, half_life_hours, elapsed_hours)
+mean_arterial_pressure(systolic_mmhg, diastolic_mmhg)
+    Estimate first-order concentration decay and mean arterial pressure.
+
+ECOLOGY / POPULATION
+
+shannon_diversity(counts, base=math.e)
+simpson_diversity(counts)
+pielou_evenness(counts)
+logistic_population(initial_population, growth_rate, carrying_capacity, time)
+    Calculate diversity indices and logistic population growth.
+
+OCEANOGRAPHY / MACHINE LEARNING (OPTIONAL PACKAGES)
+
+gsw_seawater_properties(practical_salinity, temperature_c, pressure_dbar=0, longitude=0, latitude=0)
+sklearn_train_test_split(features, targets, ...)
+sklearn_classification_report(y_true, y_pred)
+sklearn_linear_regression(features, targets, ...)
+    These helpers require optional gsw or scikit-learn installations.
+
+ENGINEERING (SI UNITS)
+
+reynolds_number(density_kg_m3, velocity_m_s, characteristic_length_m, dynamic_viscosity_pa_s)
+control_natural_frequency(mass_kg, stiffness_n_m)
+control_damping_ratio(mass_kg, damping_n_s_m, stiffness_n_m)
+cantilever_tip_deflection(point_load_n, length_m, youngs_modulus_pa, second_moment_m4)
+beam_bending_stress(moment_nm, second_moment_m4, distance_m)
+    Calculate fluid flow, vibration, and beam quantities.
+
+CLINICAL UNITS / LAB CONVERSIONS
+
+weight_based_dose(dose_mg_per_kg, weight_kg)
+convert_mass_concentration(value, from_unit, to_unit)
+    Convert among mg/L, g/L, mg/dL, and ug/mL.
+glucose_mg_dl_to_mmol_l(value_mg_dl)
+glucose_mmol_l_to_mg_dl(value_mmol_l)
+cholesterol_mg_dl_to_mmol_l(value_mg_dl)
+creatinine_mg_dl_to_umol_l(value_mg_dl)
+    Convert common lab units; results depend on analyte-specific molar mass.
+
+HEAT TRANSFER / THERMODYNAMICS
+
+heat_conduction_rate(conductivity_w_m_k, area_m2, temperature_difference_k, thickness_m)
+heat_convection_rate(heat_transfer_coefficient_w_m2_k, area_m2, surface_temp_k, fluid_temp_k)
+heat_radiation_rate(emissivity, area_m2, surface_temp_k, surroundings_temp_k)
+carnot_efficiency(hot_temperature_k, cold_temperature_k)
+volumetric_thermal_expansion(initial_volume_m3, expansion_coefficient_per_k, temperature_change_k)
+    Use SI units and absolute temperatures in kelvin.
+
+ELECTRICAL CIRCUITS
+
+ohms_law(voltage_v=None, current_a=None, resistance_ohm=None)
+rc_time_constant(resistance_ohm, capacitance_f)
+equivalent_resistance(resistances_ohm, connection="series")
+    Solve basic ideal Ohm's law, RC, and resistor network calculations.
+
+
+
 
 ────────────────────────────────────────────────────────────
+
+BIOCHEMISTRY
+
+michaelis_menten_velocity(vmax, substrate_concentration, km)
+henderson_hasselbalch(pka, base_concentration, acid_concentration)
+beer_lambert_absorbance(molar_absorptivity_l_mol_cm, concentration_mol_l, path_length_cm)
+osmotic_pressure_kpa(molarity_mol_l, temperature_k, vanthoff_factor=1)
+    Enzyme kinetics, buffer pH, absorbance, and ideal osmotic pressure.
+
+ENVIRONMENT / HYDROLOGY / GEOLOGY
+
+magnus_relative_humidity(temperature_c, dewpoint_c)
+magnus_dewpoint_c(temperature_c, relative_humidity_percent)
+isa_pressure_altitude_pa(altitude_m)
+hydrostatic_pressure_kpa(fluid_density_kg_m3, depth_m, gravity_m_s2=9.80665)
+geothermal_temperature_c(surface_temperature_c, geothermal_gradient_c_per_km, depth_m)
+    Atmospheric, hydrostatic, and geothermal estimates with stated units.
+
+SIGNAL PROCESSING / ACOUSTICS
+
+signal_rms(samples)
+signal_peak_to_peak(samples)
+signal_snr_db(signal_samples, noise_samples)
+zero_crossing_rate(samples)
+sample_rate_hz(sample_count, duration_s)
+sound_intensity_level_db(intensity_w_m2, reference_w_m2=1e-12)
+sound_intensity_from_db(level_db, reference_w_m2=1e-12)
+    Calculate signal summaries, sampling rate, and acoustic intensity levels.
+
+CIRCUITS / MATERIALS / STATISTICS
+
+capacitor_energy_j(capacitance_f, voltage_v)
+inductor_energy_j(inductance_h, current_a)
+capacitive_reactance_ohm(frequency_hz, capacitance_f)
+inductive_reactance_ohm(frequency_hz, inductance_h)
+thermal_diffusivity_m2_s(conductivity_w_m_k, density_kg_m3, specific_heat_j_kg_k)
+cohens_d(group_a, group_b)
+standard_error_of_mean(samples)
+    SI units are used for electrical and material calculations.
+
+
+AGRICULTURE / FOOD / ENVIRONMENT
+
+hargreaves_samani_et0_mm_day(tmax_c, tmin_c, tmean_c, ra_mj_m2_day)
+soil_porosity_fraction(bulk_density_kg_m3, particle_density_kg_m3=2650)
+soil_water_content_fraction(water_volume_m3, soil_volume_m3)
+food_moisture_percent(wet_sample_mass_g, dry_matter_mass_g, basis="wet")
+water_activity_from_equilibrium_rh(relative_humidity_percent)
+co2_from_oxidized_carbon_kg(carbon_mass_kg, oxidation_fraction=1.0)
+
+MEDICINE / STATISTICS / POPULATION
+
+diagnostic_test_metrics(true_positive, false_positive, true_negative, false_negative)
+gini_coefficient(values)
+population_exponential_projection(initial_population, growth_rate_per_time, elapsed_time)
+    Undefined diagnostic ratios are returned as None with an explanation.
+
+GEOLOGY / OPTICS / MECHANICS / ELECTROCHEMISTRY
+
+seismic_energy_j(moment_magnitude)
+photon_energy_j(wavelength_m)
+snell_refracted_angle_deg(n_incident, n_transmitted, incident_angle_deg)
+thin_lens_image_distance_m(focal_length_m, object_distance_m)
+stress_from_force_pa(force_n, area_m2)
+engineering_strain(initial_length_m, final_length_m)
+factor_of_safety(strength_pa, working_stress_pa)
+sensible_heat_j(mass_kg, specific_heat_j_kg_k, temperature_change_k)
+latent_heat_j(mass_kg, latent_heat_j_kg)
+nernst_potential_v(standard_potential_v, temperature_k, electrons_transferred, reaction_quotient)
+solution_dilution_molarity(stock_molarity, stock_volume_l, final_volume_l)
+percent_yield(actual_yield, theoretical_yield)
+
+WIKIPEDIA SEARCH (OPTIONAL wikipedia PACKAGE + NETWORK)
+
+wikipedia_status()
+    Report whether the optional Wikipedia client package is installed.
+wikipedia_search(query, results=5, language="en")
+wikipedia_summary(query, sentences=3, language="en")
+wikipedia_page_info(title, language="en", include_content=False)
+wikipedia_article(title, language=None)
+    Search titles, fetch summaries, page details, or full article text.
+    Full articles are formatted with wrapped paragraphs, section headings, and lists.
+    Install with: python -m pip install wikipedia
+    Calls use Wikipedia's public API and rate limiting; network access is required.
+
 [bold yellow]ADVANCED JAX / DIFFERENTIABLE COMPUTING[/bold yellow]
 ────────────────────────────────────────────────────────────
 
@@ -41030,7 +42404,7 @@ END OF HELP
     console.print(
         Panel.fit(
             help_text,
-            title="HELP MENU",
+            title=tr("help"),
             border_style="cyan"
         )
     )
@@ -41103,6 +42477,12 @@ def caesar_decrypt(text, shift):
 def english():
     return set_language("en")
 
+def mandarin():
+    return set_language("zh")
+
+def chinese():
+    return set_language("zh")
+
 def alloy_density(densities,fractions):
     return 1/sum(
         f/d for d,f in zip(densities,fractions)
@@ -41168,17 +42548,54 @@ def binding_energy(delta_m):
     c = 299792458
     return delta_m*c*c
 
-def tr(key):
-    return languages.get(language, languages["en"]).get(key, key)
+def tr(key, **format_values):
+    """Return a short interface label in the selected Dave language."""
+    text = languages.get(language, languages["en"]).get(key, languages["en"].get(key, key))
+    return text.format(**format_values) if format_values else text
+
 
 def set_language(lang):
+    """Select English, Spanish, Japanese, Mandarin Chinese, or French."""
     global language
+    code = str(lang).strip().lower().replace("_", "-")
+    aliases = {
+        "english": "en", "spanish": "es", "japanese": "ja", "jp": "ja",
+        "mandarin": "zh", "chinese": "zh", "中文": "zh", "zh-cn": "zh",
+        "zh-hans": "zh", "french": "fr",
+    }
+    code = aliases.get(code, code)
+    if code not in languages:
+        return tr("unsupported_language")
+    language = code
+    return tr("language_set", name=language_names[code])
 
-    if lang in languages:
-        language = lang
-        return f"Language set to {lang}"
 
-    return "Unsupported language"
+def _language_selftest():
+    """Exercise each supported language and restore the current selection."""
+    global language
+    original = language
+    try:
+        aliases = {"English": "en", "Spanish": "es", "Japanese": "ja",
+                   "Mandarin": "zh", "French": "fr"}
+        for name, code in aliases.items():
+            set_language(name)
+            if language != code or not tr("welcome") or not tr("prompt"):
+                raise AssertionError(f"Language selection failed for {name}.")
+        wrappers = {"en": english, "es": spanish, "ja": japanese,
+                    "zh": mandarin, "fr": french}
+        expected_help = {"en": "Help", "es": "Ayuda", "ja": "ヘルプ",
+                         "zh": "帮助", "fr": "Aide"}
+        for code, wrapper in wrappers.items():
+            wrapper()
+            if language != code or tr("help") != expected_help[code]:
+                raise AssertionError(f"Language wrapper or translation failed for {code}.")
+        set_language("zh-CN")
+        if language != "zh":
+            raise AssertionError("zh-CN must select Mandarin Chinese.")
+        return "five interface languages and aliases passed"
+    finally:
+        language = original
+
 
 # =========================================================
 # ASCII GRAPH
@@ -41231,59 +42648,35 @@ def ascii_plot(expr):
 
 
 language = "en"
-
+language_names = {"en": "English", "es": "Español", "ja": "日本語",
+                  "zh": "中文 (Mandarin)", "fr": "Français"}
 languages = {
-    "en": {
-        "welcome": "Welcome",
-        "goodbye": "Goodbye",
-        "help": "Help",
-        "answer": "Answer",
-        "error": "Error",
-        "enter_equation": "Enter equation here:",
-        "unknown_command": "Unknown command",
-    },
-
-    "es": {
-        "welcome": "Bienvenido",
-        "goodbye": "Adiós",
-        "help": "Ayuda",
-        "answer": "Respuesta",
-        "error": "Error",
-        "enter_equation": "Ingrese una ecuación:",
-        "unknown_command": "Comando desconocido",
-    },
-
-    "fr": {
-        "welcome": "Bienvenue",
-        "goodbye": "Au revoir",
-        "help": "Aide",
-        "answer": "Réponse",
-        "error": "Erreur",
-        "enter_equation": "Entrez une équation :",
-        "unknown_command": "Commande inconnue",
-    },
-
-    "de": {
-        "welcome": "Willkommen",
-        "goodbye": "Tschüss",
-        "help": "Hilfe",
-        "answer": "Antwort",
-        "error": "Fehler",
-        "enter_equation": "Geben Sie eine Gleichung ein:",
-        "unknown_command": "Unbekannter Befehl",
-    },
-
-    "ja": {
-        "welcome": "ようこそ",
-        "goodbye": "さようなら",
-        "help": "ヘルプ",
-        "answer": "答え",
-        "error": "エラー",
-        "enter_equation": "式を入力してください:",
-        "unknown_command": "不明なコマンド",
-    }
+    "en": {"welcome": "Welcome", "about": "Dave scientific calculator", "goodbye": "Goodbye",
+           "help": "Help", "answer": "Answer", "error": "Error", "prompt": "Enter an equation or type help:",
+           "enter_equation": "Enter equation here:", "unknown_command": "Unknown command",
+           "language_set": "Language set to {name}.", "unsupported_language": "Unsupported language. Use en, es, ja, zh, or fr.",
+           "no_history": "No history yet."},
+    "es": {"welcome": "Bienvenido", "about": "Calculadora científica Dave", "goodbye": "Adiós",
+           "help": "Ayuda", "answer": "Respuesta", "error": "Error", "prompt": "Escribe una ecuación o ayuda:",
+           "enter_equation": "Ingrese una ecuación:", "unknown_command": "Comando desconocido",
+           "language_set": "Idioma cambiado a {name}.", "unsupported_language": "Idioma no compatible. Usa en, es, ja, zh o fr.",
+           "no_history": "Aún no hay historial."},
+    "ja": {"welcome": "ようこそ", "about": "Dave 科学計算機", "goodbye": "さようなら",
+           "help": "ヘルプ", "answer": "答え", "error": "エラー", "prompt": "式を入力するか、help と入力してください:",
+           "enter_equation": "式を入力してください:", "unknown_command": "不明なコマンド",
+           "language_set": "言語を{name}に設定しました。", "unsupported_language": "未対応の言語です。en、es、ja、zh、frを指定してください。",
+           "no_history": "履歴はありません。"},
+    "zh": {"welcome": "欢迎", "about": "Dave 科学计算器", "goodbye": "再见",
+           "help": "帮助", "answer": "答案", "error": "错误", "prompt": "请输入算式或输入 help：",
+           "enter_equation": "请输入算式：", "unknown_command": "未知命令",
+           "language_set": "语言已设为{name}。", "unsupported_language": "不支持此语言。请使用 en、es、ja、zh 或 fr。",
+           "no_history": "暂无历史记录。"},
+    "fr": {"welcome": "Bienvenue", "about": "Calculatrice scientifique Dave", "goodbye": "Au revoir",
+           "help": "Aide", "answer": "Réponse", "error": "Erreur", "prompt": "Saisissez une équation ou help :",
+           "enter_equation": "Saisissez une équation :", "unknown_command": "Commande inconnue",
+           "language_set": "Langue définie sur {name}.", "unsupported_language": "Langue non prise en charge. Utilisez en, es, ja, zh ou fr.",
+           "no_history": "Aucun historique pour le moment."},
 }
-
 x, y, z = sp.symbols("x y z")
 
 variables = {
@@ -41333,6 +42726,8 @@ variables = {
     # ================= TRIG =================
 
     "set_language": set_language,
+    "english": english, "spanish": spanish, "japanese": japanese,
+    "mandarin": mandarin, "french": french,
     "sin": sin_wrapper,
     "cos": cos_wrapper,
     "tan": tan_wrapper,
@@ -41645,6 +43040,87 @@ variables = {
     "mifflin_st_jeor": mifflin_st_jeor,
     "cardiac_output": cardiac_output,
     "minute_ventilation": minute_ventilation,
+    "epidemiology_2x2": epidemiology_2x2,
+    "number_needed_to_treat": number_needed_to_treat,
+    "drug_concentration_after_dose": drug_concentration_after_dose,
+    "mean_arterial_pressure": mean_arterial_pressure,
+    "shannon_diversity": shannon_diversity,
+    "simpson_diversity": simpson_diversity,
+    "pielou_evenness": pielou_evenness,
+    "logistic_population": logistic_population,
+    "reynolds_number": reynolds_number,
+    "control_natural_frequency": control_natural_frequency,
+    "control_damping_ratio": control_damping_ratio,
+    "cantilever_tip_deflection": cantilever_tip_deflection,
+    "beam_bending_stress": beam_bending_stress,
+    "weight_based_dose": weight_based_dose,
+    "convert_mass_concentration": convert_mass_concentration,
+    "glucose_mg_dl_to_mmol_l": glucose_mg_dl_to_mmol_l,
+    "glucose_mmol_l_to_mg_dl": glucose_mmol_l_to_mg_dl,
+    "cholesterol_mg_dl_to_mmol_l": cholesterol_mg_dl_to_mmol_l,
+    "creatinine_mg_dl_to_umol_l": creatinine_mg_dl_to_umol_l,
+    "heat_conduction_rate": heat_conduction_rate,
+    "heat_convection_rate": heat_convection_rate,
+    "heat_radiation_rate": heat_radiation_rate,
+    "carnot_efficiency": carnot_efficiency,
+    "volumetric_thermal_expansion": volumetric_thermal_expansion,
+    "ohms_law": ohms_law,
+    "rc_time_constant": rc_time_constant,
+    "equivalent_resistance": equivalent_resistance,
+    "sklearn_logistic_classification": sklearn_logistic_classification,
+    "hargreaves_samani_et0_mm_day": hargreaves_samani_et0_mm_day,
+    "soil_porosity_fraction": soil_porosity_fraction,
+    "soil_water_content_fraction": soil_water_content_fraction,
+    "food_moisture_percent": food_moisture_percent,
+    "water_activity_from_equilibrium_rh": water_activity_from_equilibrium_rh,
+    "diagnostic_test_metrics": diagnostic_test_metrics,
+    "co2_from_oxidized_carbon_kg": co2_from_oxidized_carbon_kg,
+    "seismic_energy_j": seismic_energy_j,
+    "photon_energy_j": photon_energy_j,
+    "snell_refracted_angle_deg": snell_refracted_angle_deg,
+    "thin_lens_image_distance_m": thin_lens_image_distance_m,
+    "stress_from_force_pa": stress_from_force_pa,
+    "engineering_strain": engineering_strain,
+    "factor_of_safety": factor_of_safety,
+    "sensible_heat_j": sensible_heat_j,
+    "latent_heat_j": latent_heat_j,
+    "nernst_potential_v": nernst_potential_v,
+    "solution_dilution_molarity": solution_dilution_molarity,
+    "percent_yield": percent_yield,
+    "gini_coefficient": gini_coefficient,
+    "population_exponential_projection": population_exponential_projection,
+    "wikipedia_status": wikipedia_status,
+    "wikipedia_search": wikipedia_search,
+    "wikipedia_summary": wikipedia_summary,
+    "wikipedia_page_info": wikipedia_page_info,
+    "wikipedia_article": wikipedia_article,
+    "michaelis_menten_velocity": michaelis_menten_velocity,
+    "henderson_hasselbalch": henderson_hasselbalch,
+    "beer_lambert_absorbance": beer_lambert_absorbance,
+    "osmotic_pressure_kpa": osmotic_pressure_kpa,
+    "magnus_relative_humidity": magnus_relative_humidity,
+    "magnus_dewpoint_c": magnus_dewpoint_c,
+    "isa_pressure_altitude_pa": isa_pressure_altitude_pa,
+    "hydrostatic_pressure_kpa": hydrostatic_pressure_kpa,
+    "geothermal_temperature_c": geothermal_temperature_c,
+    "signal_rms": signal_rms,
+    "signal_peak_to_peak": signal_peak_to_peak,
+    "signal_snr_db": signal_snr_db,
+    "zero_crossing_rate": zero_crossing_rate,
+    "sample_rate_hz": sample_rate_hz,
+    "sound_intensity_level_db": sound_intensity_level_db,
+    "sound_intensity_from_db": sound_intensity_from_db,
+    "capacitor_energy_j": capacitor_energy_j,
+    "inductor_energy_j": inductor_energy_j,
+    "capacitive_reactance_ohm": capacitive_reactance_ohm,
+    "inductive_reactance_ohm": inductive_reactance_ohm,
+    "thermal_diffusivity_m2_s": thermal_diffusivity_m2_s,
+    "cohens_d": cohens_d,
+    "standard_error_of_mean": standard_error_of_mean,
+    "gsw_seawater_properties": gsw_seawater_properties,
+    "sklearn_train_test_split": sklearn_train_test_split,
+    "sklearn_classification_report": sklearn_classification_report,
+    "sklearn_linear_regression": sklearn_linear_regression,
 
     "stock": stock,
     "stock_price": stock_price,
@@ -41852,25 +43328,53 @@ user_vars = {
 
 variables["ans"] = 0
 
+def _evaluate_expression_command(expression):
+    """Evaluate an expression through Dave's real expression namespace."""
+    expr = sp.sympify(expression, locals={**variables, **user_vars})
+    expr = sp.simplify(expr)
+    if expr.has(sp.zoo):
+        raise ZeroDivisionError("Division by zero")
+    if hasattr(expr, "evalf") and expr.is_number:
+        expr = expr.evalf()
+    return expr
+
+
+def _expression_command_selftest():
+    """Verify representative built-in and added science commands by value."""
+    import math
+    checks = (
+        ("2 + 2", 4.0),
+        ("sqrt(81)", 9.0),
+        ("soil_porosity_fraction(1325, 2650)", 0.5),
+        ("bmi(70, 1.75)", 70 / (1.75 ** 2)),
+        ("photon_energy_j(5e-7)", 6.62607015e-34 * 299792458 / 5e-7),
+    )
+    for command, expected in checks:
+        actual = float(_evaluate_expression_command(command))
+        if not math.isclose(actual, expected, rel_tol=1e-9, abs_tol=1e-30):
+            raise AssertionError(f"Command {command!r}: expected {expected}, got {actual}.")
+    return f"{len(checks)} calculator commands evaluated to expected results"
+
+
 # =========================================================
 # MAIN LOOP
 # =========================================================
 
 while True:
 
-    problem = input("\nType help to learn how to use Dave. Enter equation here: ").strip()
+    problem = input("\n" + tr("prompt") + " ").strip()
 
     if problem == "":
         continue
 
     # ---------------- HELP ----------------
-    if problem.lower() == "help":
+    if problem.lower() in ("help", "ayuda", "aide", "ヘルプ", "帮助"):
         show_help()
         continue
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.0.9. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        console.print("[yellow]You are currently running Dave Version 1.0.8. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
         continue
 
     # ---------------- ELEMENTS ----------------
@@ -41879,21 +43383,10 @@ while True:
         continue
 
     # ---------------- LANGUAGE ----------------
-    elif problem.startswith("lang "):
-
-        parts = problem.split()
-
-        if len(parts) > 1:
-
-            lang = parts[1]
-
-            if lang in languages:
-                language = lang
-                console.print(f"[green]Language {lang} set[/green]")
-
-            else:
-                console.print("[red]Unsupported language[/red]")
-
+    elif problem.lower().startswith("lang "):
+        parts = problem.split(maxsplit=1)
+        console.print("[green]" + set_language(parts[1]) + "[/green]" if len(parts) > 1 else
+                      "[red]" + tr("unsupported_language") + "[/red]")
         continue
 
     # ---------------- TIME ----------------
@@ -41928,7 +43421,7 @@ while True:
     elif problem == "history":
 
         if not history:
-            console.print("[yellow]No history yet[/yellow]")
+            console.print("[yellow]" + tr("no_history") + "[/yellow]")
 
         else:
             for h in history:
@@ -42094,27 +43587,21 @@ while True:
         elif cmd in ("quit", "exit", "q"):
             break
 
+        if cmd.startswith(("wikipedia_search(", "wikipedia_summary(", "wikipedia_page_info(", "wikipedia_article(")):
+            try:
+                console.print(_execute_wikipedia_command(problem), markup=False)
+            except Exception as e:
+                console.print(f"[red]Wikipedia error:[/red] {e}")
+            continue
+
         try:
 
-            expr = sp.sympify(
-                problem,
-                locals={**variables, **user_vars}
-            )
-
-            expr = sp.simplify(expr)
-
-            if expr.has(sp.zoo):
-                raise ZeroDivisionError(
-                    "Division by zero"
-                )
-
-            if hasattr(expr, "evalf") and expr.is_number:
-                expr = expr.evalf()
+            expr = _evaluate_expression_command(problem)
 
             console.print(
                 Panel.fit(
                     str(expr),
-                    title="Answer",
+                    title=tr("answer"),
                     border_style="green"
                 )
             )
