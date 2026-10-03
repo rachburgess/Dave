@@ -4,6 +4,7 @@ WARNING: Dave runs on your computers computing power. Because of this, be carefu
 
 This guide starts from a computer with no Python packages installed. Keep Dave’s packages in a virtual environment where possible. The platform builds are:
 
+
 | Platform | Dave file |
 | --- | --- |
 | macOS | `dave_macos.py` |
@@ -11,12 +12,16 @@ This guide starts from a computer with no Python packages installed. Keep Dave�
 | Linux | `dave_linux.py` |
 | Android (Termux) | `dave_android.py` |
 
+
 Copy the selected file to your device and run the matching instructions below from the folder containing it.
+
 
 ## MacOS
 
 1. Install Python 3.12 or newer from [python.org](https://www.python.org/downloads/).
+
 2. Open Terminal and move to the folder containing `dave.py`.
+
 3. Create and activate a virtual environment, then install Dave’s required packages:
 
 python3 -m venv .venv
@@ -28,6 +33,7 @@ python -m pip install mendeleev sympy numpy matplotlib rich yfinance pandas scip
 
 python3 dave_macos.py
 
+
 ## Linux
 
 Install Python 3.12 or newer and its venv support using your distribution’s package manager. For example, on Debian or Ubuntu:
@@ -35,18 +41,24 @@ Install Python 3.12 or newer and its venv support using your distribution’s pa
 sudo apt update
 sudo apt install python3 python3-venv python3-pip
 
+
 From the folder containing `dave_linux.py`, create the environment and install dependencies:
+
 
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip3 install --upgrade pip
 python3 -m pip3 install mendeleev sympy numpy matplotlib rich yfinance pandas scipy deep-translator
 
+
 Start Dave with:
+
 
 python dave_linux.py
 
+
 On a Linux desktop, plots use the available Tk display backend. On a headless machine, Dave uses Matplotlib’s non-interactive Agg backend; plot windows cannot open there.
+
 
 ## Windows
 
@@ -64,9 +76,11 @@ If PowerShell blocks environment activation, run this in that PowerShell window 
 
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
+
 4. Start Dave:
 
 python dave_windows.py
+
 
 ## Android (Termux)
 
@@ -78,13 +92,18 @@ pkg update
 pkg upgrade
 pkg install python3 python-pip3 python-numpy python-scipy python-matplotlib python-pandas
 
+
 Allow access to shared storage if you plan to open the file from Downloads:
+
 
 termux-setup-storage
 
+
 Place `dave_android.py` in the Termux home folder. If it is in Android’s Downloads folder, copy it into Termux with:
 
+
 cp ~/storage/downloads/dave_android.py ~/
+
 
 Then create an environment that can see the Termux-provided compiled packages:
 
@@ -94,9 +113,11 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install mendeleev sympy rich yfinance deep-translator
 
+
 Launch Dave with:
 
 python dave_android.py
+
 
 Android package support varies by device and Termux repository. Termux supplies compiled packages such as NumPy, SciPy, Matplotlib, and Pandas because building these libraries with pip directly on a phone can be difficult. Optional scientific integrations may not be available on Android. Dave’s Android build uses a non-GUI plotting backend, so it cannot open desktop plot windows.
 
@@ -104,12 +125,14 @@ Android package support varies by device and Termux repository. Termux supplies 
 
 At the prompt, try:
 
+
 2 + 2
 sqrt(81)
 derivative(x**3)
 absolute value of -5
 
-Enter `help` for the in-program feature list, `selftest` to run Dave’s checks, or `quit` to exit.
+
+Enter `help` for the in-program feature list, `selftest` to run Dave’s checks, `about` to learn more about Dave, or `quit` to exit.
 
 ## Start Dave later
 
