@@ -1,5 +1,3 @@
-Last login: Sat Oct  3 17:57:26 on ttys001
-rachelburgess@MacBookPro ~ % cat dave_windows.py
 #!/usr/bin/env python3
 
 SAVE_FILE = "variables.pkl"
@@ -34663,6 +34661,123 @@ def standard_error_of_mean(samples):
     return sd / math.sqrt(len(values))
 
 
+
+def acoustic_sound_pressure_level_db(rms_pressure_pa, reference_pressure_pa=20e-6):
+    """Calculate sound pressure level in dB re a positive reference pressure."""
+    pressure, reference = _science_finite_values(
+        rms_pressure_pa=rms_pressure_pa,
+        reference_pressure_pa=reference_pressure_pa).values()
+    if pressure <= 0 or reference <= 0:
+        raise ValueError("RMS and reference pressures must be positive.")
+    return 20 * math.log10(pressure / reference)
+
+
+def acoustic_pressure_from_spl_pa(level_db, reference_pressure_pa=20e-6):
+    """Convert sound pressure level in dB to RMS pressure in pascals."""
+    level, reference = _science_finite_values(
+        level_db=level_db, reference_pressure_pa=reference_pressure_pa).values()
+    if reference <= 0:
+        raise ValueError("Reference pressure must be positive.")
+    return reference * 10 ** (level / 20)
+
+
+def doppler_frequency_hz(source_frequency_hz, sound_speed_m_s,
+                         source_toward_observer_m_s=0,
+                         observer_toward_source_m_s=0):
+    """Classical Doppler frequency; positive velocities mean motion toward the other."""
+    frequency, speed, source_v, observer_v = _science_finite_values(
+        source_frequency_hz=source_frequency_hz, sound_speed_m_s=sound_speed_m_s,
+        source_toward_observer_m_s=source_toward_observer_m_s,
+        observer_toward_source_m_s=observer_toward_source_m_s).values()
+    if frequency <= 0 or speed <= 0 or speed <= source_v or speed + observer_v <= 0:
+        raise ValueError("Frequency and sound speed must be positive and velocities physical.")
+    return frequency * (speed + observer_v) / (speed - source_v)
+
+
+def microbial_population(initial_count, growth_rate_per_h, elapsed_h):
+    """Project population by continuous exponential growth (rate per hour)."""
+    initial, rate, elapsed = _science_finite_values(
+        initial_count=initial_count, growth_rate_per_h=growth_rate_per_h,
+        elapsed_h=elapsed_h).values()
+    if initial < 0 or elapsed < 0:
+        raise ValueError("Initial count and elapsed time must be non-negative.")
+    return initial * math.exp(rate * elapsed)
+
+
+def microbial_doubling_time_h(growth_rate_per_h):
+    """Calculate population doubling time from continuous growth rate per hour."""
+    rate = _science_finite_values(growth_rate_per_h=growth_rate_per_h)["growth_rate_per_h"]
+    if rate <= 0:
+        raise ValueError("Growth rate must be positive.")
+    return math.log(2) / rate
+
+
+def microbial_log_reduction(start_count, end_count):
+    """Calculate log10 reduction from starting to ending viable counts."""
+    start, end = _science_finite_values(
+        start_count=start_count, end_count=end_count).values()
+    if start <= 0 or end <= 0 or end > start:
+        raise ValueError("Counts must be positive and ending count cannot exceed starting count.")
+    return math.log10(start / end)
+
+
+def pharmacokinetic_loading_dose_mg(target_concentration_mg_l,
+                                    volume_distribution_l, bioavailability=1.0):
+    """Estimate one-compartment loading amount from target concentration and Vd."""
+    target, volume, bio = _science_finite_values(
+        target_concentration_mg_l=target_concentration_mg_l,
+        volume_distribution_l=volume_distribution_l,
+        bioavailability=bioavailability).values()
+    if target < 0 or volume <= 0 or not 0 < bio <= 1:
+        raise ValueError("Target must be non-negative, volume positive, and bioavailability in (0, 1].")
+    return target * volume / bio
+
+
+def pharmacokinetic_maintenance_rate_mg_h(clearance_l_h,
+                                           target_concentration_mg_l,
+                                           bioavailability=1.0):
+    """Estimate maintenance input rate for target concentration (mg/hour)."""
+    clearance, target, bio = _science_finite_values(
+        clearance_l_h=clearance_l_h, target_concentration_mg_l=target_concentration_mg_l,
+        bioavailability=bioavailability).values()
+    if clearance < 0 or target < 0 or not 0 < bio <= 1:
+        raise ValueError("Clearance and target must be non-negative; bioavailability in (0, 1].")
+    return clearance * target / bio
+
+
+def pharmacokinetic_half_life_h(volume_distribution_l, clearance_l_h):
+    """Calculate one-compartment elimination half-life from Vd and clearance."""
+    volume, clearance = _science_finite_values(
+        volume_distribution_l=volume_distribution_l, clearance_l_h=clearance_l_h).values()
+    if volume <= 0 or clearance <= 0:
+        raise ValueError("Volume of distribution and clearance must be positive.")
+    return math.log(2) * volume / clearance
+
+
+def seawater_density_kg_m3(temperature_c, salinity_psu):
+    """Approximate seawater density at 1 atm using UNESCO 1983 EOS-80."""
+    t, s = _science_finite_values(
+        temperature_c=temperature_c, salinity_psu=salinity_psu).values()
+    if not 0 <= t <= 40 or not 0 <= s <= 42:
+        raise ValueError("EOS-80 approximation requires temperature 0–40 °C and salinity 0–42 PSU.")
+    rho_w = (999.842594 + 6.793952e-2*t - 9.095290e-3*t**2
+             + 1.001685e-4*t**3 - 1.120083e-6*t**4 + 6.536332e-9*t**5)
+    a = (0.824493 - 4.0899e-3*t + 7.6438e-5*t**2
+         - 8.2467e-7*t**3 + 5.3875e-9*t**4)
+    b = -5.72466e-3 + 1.0227e-4*t - 1.6546e-6*t**2
+    return rho_w + a*s + b*s**1.5 + 4.8314e-4*s**2
+
+
+def ocean_depth_from_gauge_pressure_m(pressure_kpa, density_kg_m3=1025,
+                                      gravity_m_s2=9.80665):
+    """Estimate depth from gauge pressure with constant density and gravity."""
+    pressure, density, gravity = _science_finite_values(
+        pressure_kpa=pressure_kpa, density_kg_m3=density_kg_m3,
+        gravity_m_s2=gravity_m_s2).values()
+    if pressure < 0 or density <= 0 or gravity <= 0:
+        raise ValueError("Gauge pressure must be non-negative; density and gravity positive.")
+    return pressure * 1000 / (density * gravity)
+
 # ==========================================================
 # ADDITIONAL SCIENCE AREAS AND WIKIPEDIA SEARCH
 # ==========================================================
@@ -36307,6 +36422,17 @@ def selftest():
     test_value("thermal diffusivity", lambda: thermal_diffusivity_m2_s(0.6, 1000, 4000), 1.5e-7)
     test_value("Cohen's d", lambda: cohens_d([2, 4], [1, 3]), 1 / math.sqrt(2))
     test_value("standard error", lambda: standard_error_of_mean([1, 2, 3, 4]), math.sqrt(5 / 3) / 2)
+    test_value("acoustic SPL", lambda: acoustic_sound_pressure_level_db(0.02), 60)
+    test_value("pressure from SPL", lambda: acoustic_pressure_from_spl_pa(60), 0.02)
+    test_value("Doppler frequency", lambda: doppler_frequency_hz(1000, 340, 10), 1000 * 340 / 330)
+    test_value("microbial exponential growth", lambda: microbial_population(100, math.log(2), 3), 800)
+    test_value("microbial doubling time", lambda: microbial_doubling_time_h(math.log(2)), 1)
+    test_value("microbial log reduction", lambda: microbial_log_reduction(1e6, 1e3), 3)
+    test_value("PK loading amount", lambda: pharmacokinetic_loading_dose_mg(2, 10, 0.5), 40)
+    test_value("PK maintenance rate", lambda: pharmacokinetic_maintenance_rate_mg_h(5, 2, 0.5), 20)
+    test_value("PK elimination half-life", lambda: pharmacokinetic_half_life_h(10, 2), math.log(2) * 5)
+    test_value("seawater density", lambda: seawater_density_kg_m3(15, 35), 1025.972753865)
+    test_value("depth from gauge pressure", lambda: ocean_depth_from_gauge_pressure_m(100, 1000, 10), 10)
 
     test_value("Hargreaves-Samani ET0", lambda: hargreaves_samani_et0_mm_day(25, 15, 20, 20), 5.498568395500778)
     test_value("soil porosity", lambda: soil_porosity_fraction(1325, 2650), 0.5)
@@ -36817,14 +36943,6 @@ console = Console()
 # =========================================================
 
 language = "en"
-
-languages = {
-    "en": {"welcome":"Welcome","about":"Calculator OS","goodbye":"Goodbye","help":"Help","result":"Result","history":"History"},
-    "es": {"welcome":"Bienvenido","about":"Sistema","goodbye":"Adiós","help":"Ayuda","result":"Resultado","history":"Historial"},
-    "fr": {"welcome":"Bienvenue","about":"Système","goodbye":"Au revoir","help":"Aide","result":"Résultat","history":"Historique"},
-    "de": {"welcome":"Willkommen","about":"System","goodbye":"Tschüss","help":"Hilfe","result":"Ergebnis","history":"Verlauf"},
-    "jp": {"welcome":"ようこそ","about":"システム","goodbye":"さようなら","help":"ヘルプ","result":"結果","history":"履歴"}
-}
 
 # =========================================================
 # HISTORY FILE
@@ -39858,7 +39976,7 @@ def piecewise(*args):
 # HELP
 # =========================================================
 
-def show_help():
+def _show_help_full_english():
 
     help_text = """
 
@@ -41595,6 +41713,27 @@ nernst_potential_v(standard_potential_v, temperature_k, electrons_transferred, r
 solution_dilution_molarity(stock_molarity, stock_volume_l, final_volume_l)
 percent_yield(actual_yield, theoretical_yield)
 
+
+MICROBIOLOGY / PHARMACOKINETICS
+
+microbial_population(initial_count, growth_rate_per_h, elapsed_h)
+microbial_doubling_time_h(growth_rate_per_h)
+microbial_log_reduction(start_count, end_count)
+pharmacokinetic_loading_dose_mg(target_concentration_mg_l, volume_distribution_l, bioavailability=1.0)
+pharmacokinetic_maintenance_rate_mg_h(clearance_l_h, target_concentration_mg_l, bioavailability=1.0)
+pharmacokinetic_half_life_h(volume_distribution_l, clearance_l_h)
+    Exponential population models and one-compartment PK estimates, with explicit units.
+
+OCEANOGRAPHY / ACOUSTICS
+
+seawater_density_kg_m3(temperature_c, salinity_psu)
+ocean_depth_from_gauge_pressure_m(pressure_kpa, density_kg_m3=1025, gravity_m_s2=9.80665)
+acoustic_sound_pressure_level_db(rms_pressure_pa, reference_pressure_pa=20e-6)
+acoustic_pressure_from_spl_pa(level_db, reference_pressure_pa=20e-6)
+doppler_frequency_hz(source_frequency_hz, sound_speed_m_s, source_toward_observer_m_s=0, observer_toward_source_m_s=0)
+    EOS-80 density is the atmospheric-pressure approximation; depth uses constant density/gravity.
+    Doppler velocities are positive when moving toward the other object.
+
 WIKIPEDIA SEARCH (OPTIONAL wikipedia PACKAGE + NETWORK)
 
 wikipedia_status()
@@ -42404,6 +42543,8 @@ END OF HELP
 =========================================================
 """
 
+    help_text = help_text.replace(
+        "Select one of the five interface languages with:", tr("language_help"))
     console.print(
         Panel.fit(
             help_text,
@@ -42412,6 +42553,102 @@ END OF HELP
         )
     )
  
+
+LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
+       'LANGUAGE: Set with lang en, lang es, lang ja, lang zh, or lang fr. Function '
+       'names are entered as shown in the command directory.\n'
+       'USAGE: Enter an expression such as 2 + 2 or sqrt(81). Use help for this guide, '
+       'selftest to check functions, history to view prior expressions, and quit to '
+       'exit.\n'
+       'SCIENCES: Mathematics, algebra, calculus, statistics, probability, astronomy, '
+       'physics, chemistry, biology, physiology, medicine, pharmacokinetics, '
+       'meteorology, climate, ecology, geology, geography, oceanography, engineering, '
+       'materials, neuroscience, quantum science, signal processing, and visualization.\n'
+       'WIKIPEDIA: wikipedia_search("topic"), wikipedia_summary("topic"), '
+       'wikipedia_article("title"). Requires the optional wikipedia package and internet '
+       'access.\n'
+       'AVAILABLE FUNCTION COMMANDS:',
+ 'es': 'DAVE — AYUDA DE LA CALCULADORA CIENTÍFICA\n'
+       'IDIOMA: Configúralo con lang en, lang es, lang ja, lang zh o lang fr. Introduce '
+       'los nombres de función tal como aparecen en el directorio de comandos.\n'
+       'USO: Escribe una expresión como 2 + 2 o sqrt(81). Usa help para esta guía, '
+       'selftest para comprobar funciones, history para ver el historial y quit para '
+       'salir.\n'
+       'CIENCIAS: Matemáticas, álgebra, cálculo, estadística, probabilidad, astronomía, '
+       'física, química, biología, fisiología, medicina, farmacocinética, meteorología, '
+       'clima, ecología, geología, geografía, oceanografía, ingeniería, materiales, '
+       'neurociencia, ciencia cuántica, procesamiento de señales y visualización.\n'
+       'WIKIPEDIA: wikipedia_search("tema"), wikipedia_summary("tema"), '
+       'wikipedia_article("título"). Requiere el paquete opcional wikipedia y conexión a '
+       'internet.\n'
+       'COMANDOS DE FUNCIONES DISPONIBLES:',
+ 'fr': 'DAVE — AIDE DE LA CALCULATRICE SCIENTIFIQUE\n'
+       'LANGUE : Choisissez avec lang en, lang es, lang ja, lang zh ou lang fr. '
+       'Saisissez les fonctions selon les noms du répertoire des commandes.\n'
+       'UTILISATION : Saisissez une expression comme 2 + 2 ou sqrt(81). Tapez help pour '
+       'ce guide, selftest pour tester les fonctions, history pour afficher l’historique '
+       'et quit pour quitter.\n'
+       'SCIENCES : Mathématiques, algèbre, calcul, statistiques, probabilités, '
+       'astronomie, physique, chimie, biologie, physiologie, médecine, '
+       'pharmacocinétique, météorologie, climat, écologie, géologie, géographie, '
+       'océanographie, ingénierie, matériaux, neurosciences, science quantique, '
+       'traitement du signal et visualisation.\n'
+       'WIKIPÉDIA : wikipedia_search("sujet"), wikipedia_summary("sujet"), '
+       'wikipedia_article("titre"). Nécessite le paquet optionnel wikipedia et une '
+       'connexion Internet.\n'
+       'RÉPERTOIRE DES COMMANDES DE FONCTIONS DISPONIBLES :',
+ 'ja': 'DAVE — 科学計算機ヘルプ\n'
+       '言語: lang en、lang es、lang ja、lang zh、lang frで設定します。関数名はコマンド一覧の表記どおりに入力します。\n'
+       '使い方: 2 + 2 や sqrt(81) '
+       'のような式を入力します。helpでこの案内、selftestで関数テスト、historyで履歴を表示し、quitで終了します。\n'
+       '科学分野: '
+       '数学、代数、微積分、統計、確率、天文学、物理学、化学、生物学、生理学、医学、薬物動態、気象、気候、生態学、地質学、地理学、海洋学、工学、材料科学、神経科学、量子科学、信号処理、可視化。\n'
+       'Wikipedia: '
+       'wikipedia_search("トピック")、wikipedia_summary("トピック")、wikipedia_article("記事名")。任意のwikipediaパッケージとネット接続が必要です。\n'
+       '利用可能な関数コマンド:',
+ 'zh': 'DAVE — 科学计算器帮助\n'
+       '语言：使用 lang en、lang es、lang ja、lang zh 或 lang fr 设置。函数名称请按命令目录中的写法输入。\n'
+       '使用：输入 2 + 2 或 sqrt(81) 等算式。输入 help 查看本指南，selftest 检查函数，history 查看历史，quit 退出。\n'
+       '科学领域：数学、代数、微积分、统计、概率、天文学、物理、化学、生物、生理学、医学、药代动力学、气象、气候、生态、地质、地理、海洋学、工程、材料、神经科学、量子科学、信号处理和可视化。\n'
+       '维基百科：wikipedia_search("主题")、wikipedia_summary("主题")、wikipedia_article("标题")。需要可选 '
+       'wikipedia 软件包和互联网连接。\n'
+       '可用函数命令目录：'}
+ABOUT_TEXTS = {'en': 'Dave is a scientific calculator with mathematical, statistical, and scientific '
+       'tools. Set the interface language with lang en, lang es, lang ja, lang zh, or '
+       'lang fr. Function names remain unchanged so they can be entered as calculator '
+       'commands.',
+ 'es': 'Dave es una calculadora científica con herramientas matemáticas, estadísticas y '
+       'científicas. Configura el idioma con lang en, lang es, lang ja, lang zh o lang '
+       'fr. Los nombres de las funciones no cambian y se introducen como comandos de la '
+       'calculadora.',
+ 'fr': 'Dave est une calculatrice scientifique dotée d’outils mathématiques, '
+       'statistiques et scientifiques. Choisissez la langue avec lang en, lang es, lang '
+       'ja, lang zh ou lang fr. Les noms des fonctions restent inchangés pour être '
+       'saisis comme commandes.',
+ 'ja': 'Daveは数学、統計、科学のツールを備えた科学計算機です。lang en、lang es、lang ja、lang zh、lang '
+       'frで表示言語を設定します。関数名は計算コマンドとして入力できるよう変更しません。',
+ 'zh': 'Dave 是一款提供数学、统计和科学工具的科学计算器。使用 lang en、lang es、lang ja、lang zh 或 lang fr '
+       '设置界面语言。函数名称保持不变，以便作为计算器命令输入。'}
+ABOUT_TITLES = {'en': 'About Dave',
+ 'es': 'Acerca de Dave',
+ 'fr': 'À propos de Dave',
+ 'ja': 'Daveについて',
+ 'zh': '关于 Dave'}
+
+def show_help():
+    """Display complete English reference or localized help and command directory."""
+    if language == "en":
+        return _show_help_full_english()
+    names = sorted(name for name, value in variables.items() if callable(value))
+    text = LOCALIZED_HELP_PAGES[language] + "\n" + ", ".join(names)
+    console.print(Panel.fit(text, title=tr("help"), border_style="cyan"))
+
+
+def show_about():
+    """Display Dave information in the currently selected language."""
+    console.print(Panel.fit(ABOUT_TEXTS[language], title=ABOUT_TITLES[language], border_style="yellow"))
+
+
 # =========================================================
 # SIMPLE ENCRYPTION
 # =========================================================
@@ -42532,9 +42769,6 @@ def spanish():
 def french():
     return set_language("fr")
 
-def german():
-    return set_language("de")
-
 def japanese():
     return set_language("ja")
 
@@ -42578,6 +42812,10 @@ def _language_selftest():
     global language
     original = language
     try:
+        required_keys = set(languages["en"])
+        for code, table in languages.items():
+            if required_keys - set(table) or any(not table.get(key) for key in required_keys):
+                raise AssertionError(f"Incomplete interface translations for {code}.")
         aliases = {"English": "en", "Spanish": "es", "Japanese": "ja",
                    "Mandarin": "zh", "French": "fr"}
         for name, code in aliases.items():
@@ -42592,6 +42830,17 @@ def _language_selftest():
             wrapper()
             if language != code or tr("help") != expected_help[code]:
                 raise AssertionError(f"Language wrapper or translation failed for {code}.")
+        command_names = set(variables)
+        for code in ("en", "es", "ja", "zh", "fr"):
+            set_language(code)
+            if set(variables) != command_names:
+                raise AssertionError(f"Calculator command set changed in language {code}.")
+            _expression_command_selftest()
+            result = float(_evaluate_expression_command("sqrt(81)"))
+            if result != 9.0:
+                raise AssertionError(f"Calculator expression failed in language {code}.")
+            if code not in LOCALIZED_HELP_PAGES or code not in ABOUT_TEXTS:
+                raise AssertionError(f"Missing localized help or About text for {code}.")
         set_language("zh-CN")
         if language != "zh":
             raise AssertionError("zh-CN must select Mandarin Chinese.")
@@ -42680,6 +42929,9 @@ languages = {
            "language_set": "Langue définie sur {name}.", "unsupported_language": "Langue non prise en charge. Utilisez en, es, ja, zh ou fr.",
            "no_history": "Aucun historique pour le moment."},
 }
+for _code, _translations in {'en': {'goodbye': 'Goodbye, and thank you for using Dave!', 'about_text': 'You are running Dave Version 1.0.8.', 'degree_enabled': 'Degree mode enabled', 'radian_enabled': 'Radian mode enabled', 'angle_degrees': 'Angle mode set to degrees.', 'angle_radians': 'Angle mode set to radians.', 'usage_abs': 'Usage: absolute value of <expression> (for example, absolute value of -5).', 'usage_abs_empty': 'Usage: absolute value of <expression>.', 'graph_error': 'Graph error', 'graph3d_error': '3D graph error', 'wikipedia_error': 'Wikipedia error', 'assignment_error': 'Assignment error', 'symbol_overwrite': 'Cannot overwrite symbolic variables x, y, or z', 'language_help': 'Choose the interface language with lang en, lang es, lang ja, lang zh, or lang fr. Command and scientific function names remain unchanged.'}, 'es': {'goodbye': '¡Adiós y gracias por usar Dave!', 'about_text': 'Estás usando Dave versión 1.0.8.', 'degree_enabled': 'Modo de grados activado', 'radian_enabled': 'Modo de radianes activado', 'angle_degrees': 'Modo angular establecido en grados.', 'angle_radians': 'Modo angular establecido en radianes.', 'usage_abs': 'Uso: absolute value of <expresión> (por ejemplo, absolute value of -5).', 'usage_abs_empty': 'Uso: absolute value of <expresión>.', 'graph_error': 'Error de gráfica', 'graph3d_error': 'Error de gráfica 3D', 'wikipedia_error': 'Error de Wikipedia', 'assignment_error': 'Error de asignación', 'symbol_overwrite': 'No se pueden sobrescribir las variables simbólicas x, y o z', 'language_help': 'Elige el idioma de la interfaz con lang en, lang es, lang ja, lang zh o lang fr. Los nombres de comandos y funciones científicas no cambian.'}, 'ja': {'goodbye': 'Daveをご利用いただき、ありがとうございました。', 'about_text': 'Dave バージョン1.0.8を実行中です。', 'degree_enabled': '度数法を有効にしました', 'radian_enabled': 'ラジアン法を有効にしました', 'angle_degrees': '角度モードを度数法に設定しました。', 'angle_radians': '角度モードをラジアン法に設定しました。', 'usage_abs': '使い方: absolute value of <式>（例: absolute value of -5）。', 'usage_abs_empty': '使い方: absolute value of <式>。', 'graph_error': 'グラフエラー', 'graph3d_error': '3Dグラフエラー', 'wikipedia_error': 'Wikipediaエラー', 'assignment_error': '代入エラー', 'symbol_overwrite': '記号変数 x、y、z は上書きできません', 'language_help': 'lang en、lang es、lang ja、lang zh、lang fr で表示言語を選択します。コマンド名と科学関数名は変更されません。'}, 'zh': {'goodbye': '再见，感谢使用 Dave！', 'about_text': '当前运行的是 Dave 1.0.8 版。', 'degree_enabled': '已启用角度制', 'radian_enabled': '已启用弧度制', 'angle_degrees': '角度模式已设为角度制。', 'angle_radians': '角度模式已设为弧度制。', 'usage_abs': '用法：absolute value of <表达式>（例如 absolute value of -5）。', 'usage_abs_empty': '用法：absolute value of <表达式>。', 'graph_error': '绘图错误', 'graph3d_error': '三维绘图错误', 'wikipedia_error': '维基百科错误', 'assignment_error': '赋值错误', 'symbol_overwrite': '不能覆盖符号变量 x、y 或 z', 'language_help': '使用 lang en、lang es、lang ja、lang zh 或 lang fr 选择界面语言。命令名和科学函数名保持不变。'}, 'fr': {'goodbye': 'Au revoir et merci d’utiliser Dave !', 'about_text': 'Dave version 1.0.8 est en cours d’exécution.', 'degree_enabled': 'Mode degrés activé', 'radian_enabled': 'Mode radians activé', 'angle_degrees': 'Mode angulaire réglé en degrés.', 'angle_radians': 'Mode angulaire réglé en radians.', 'usage_abs': 'Utilisation : absolute value of <expression> (par exemple, absolute value of -5).', 'usage_abs_empty': 'Utilisation : absolute value of <expression>.', 'graph_error': 'Erreur de graphique', 'graph3d_error': 'Erreur de graphique 3D', 'wikipedia_error': 'Erreur Wikipédia', 'assignment_error': 'Erreur d’affectation', 'symbol_overwrite': 'Impossible de remplacer les variables symboliques x, y ou z', 'language_help': 'Choisissez la langue de l’interface avec lang en, lang es, lang ja, lang zh ou lang fr. Les noms des commandes et fonctions scientifiques restent inchangés.'}}.items():
+    languages[_code].update(_translations)
+
 x, y, z = sp.symbols("x y z")
 
 variables = {
@@ -42958,7 +43210,6 @@ variables = {
     "english": english,
     "spanish": spanish,
     "french": french,
-    "german": german,
     "japanese": japanese,
     "totient": totient,
 
@@ -43120,6 +43371,17 @@ variables = {
     "thermal_diffusivity_m2_s": thermal_diffusivity_m2_s,
     "cohens_d": cohens_d,
     "standard_error_of_mean": standard_error_of_mean,
+    "acoustic_sound_pressure_level_db": acoustic_sound_pressure_level_db,
+    "acoustic_pressure_from_spl_pa": acoustic_pressure_from_spl_pa,
+    "doppler_frequency_hz": doppler_frequency_hz,
+    "microbial_population": microbial_population,
+    "microbial_doubling_time_h": microbial_doubling_time_h,
+    "microbial_log_reduction": microbial_log_reduction,
+    "pharmacokinetic_loading_dose_mg": pharmacokinetic_loading_dose_mg,
+    "pharmacokinetic_maintenance_rate_mg_h": pharmacokinetic_maintenance_rate_mg_h,
+    "pharmacokinetic_half_life_h": pharmacokinetic_half_life_h,
+    "seawater_density_kg_m3": seawater_density_kg_m3,
+    "ocean_depth_from_gauge_pressure_m": ocean_depth_from_gauge_pressure_m,
     "gsw_seawater_properties": gsw_seawater_properties,
     "sklearn_train_test_split": sklearn_train_test_split,
     "sklearn_classification_report": sklearn_classification_report,
@@ -43351,6 +43613,10 @@ def _expression_command_selftest():
         ("soil_porosity_fraction(1325, 2650)", 0.5),
         ("bmi(70, 1.75)", 70 / (1.75 ** 2)),
         ("photon_energy_j(5e-7)", 6.62607015e-34 * 299792458 / 5e-7),
+        ("microbial_population(100, 0.6931471805599453, 3)", 800.0),
+        ("seawater_density_kg_m3(15, 35)", 1025.972753865),
+        ("pharmacokinetic_half_life_h(10, 2)", math.log(2) * 5),
+        ("acoustic_sound_pressure_level_db(0.02)", 60.0),
     )
     for command, expected in checks:
         actual = float(_evaluate_expression_command(command))
@@ -43371,13 +43637,13 @@ while True:
         continue
 
     # ---------------- HELP ----------------
-    if problem.lower() in ("help", "ayuda", "aide", "ヘルプ", "帮助"):
+    if problem.lower() in ("help", "ayuda", "aide", "ヘルプ", "帮助", "ayuda", "aide"):
         show_help()
         continue
 
     # ---------------- ABOUT ----------------
     elif problem.lower() == "about":
-        console.print("[yellow]You are currently running Dave Version 1.1.1. Dave was made by a child who was upset that his calculator had limits. This one has none.[/yellow]")
+        show_about()
         continue
 
     # ---------------- ELEMENTS ----------------
@@ -43402,7 +43668,15 @@ while True:
         continue
 
     elif problem == "month":
-        console.print(datetime.datetime.now().strftime("%B"))
+        month = datetime.datetime.now().month
+        month_names = {
+            "en": "January February March April May June July August September October November December",
+            "es": "enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre",
+            "fr": "janvier février mars avril mai juin juillet août septembre octobre novembre décembre",
+            "ja": "1月 2月 3月 4月 5月 6月 7月 8月 9月 10月 11月 12月",
+            "zh": "一月 二月 三月 四月 五月 六月 七月 八月 九月 十月 十一月 十二月",
+        }
+        console.print(month_names[language].split()[month - 1])
         continue
 
     elif problem == "year":
@@ -43412,12 +43686,12 @@ while True:
     # ---------------- ANGLE MODES ----------------
     elif problem == "deg":
         angle_mode = "deg"
-        console.print("[cyan]Degree mode enabled[/cyan]")
+        console.print("[cyan]" + tr("degree_enabled") + "[/cyan]")
         continue
 
     elif problem == "rad":
         angle_mode = "rad"
-        console.print("[cyan]Radian mode enabled[/cyan]")
+        console.print("[cyan]" + tr("radian_enabled") + "[/cyan]")
         continue
 
     # ---------------- HISTORY ----------------
@@ -43467,7 +43741,7 @@ while True:
             plt.show()
 
         except Exception as e:
-            console.print(f"[red]Graph Error:[/red] {e}")
+            console.print(f"[red]{tr('graph_error')}:[/red] {e}")
 
         continue
 
@@ -43499,15 +43773,15 @@ while True:
             plt.show()
 
         except Exception as e:
-            console.print(f"[red]3D Graph Error:[/red] {e}")
+            console.print(f"[red]{tr('graph3d_error')}:[/red] {e}")
 
         continue
      
 
     # ---------------- QUIT ----------------
-    elif problem.lower() in ["quit", "exit", "q"]:
+    elif problem.lower() in ["quit", "exit", "q", "salir", "終了", "退出", "quitter"]:
 
-        console.print("[green]Goodbye, and thank you for using Dave![/green]")
+        console.print("[green]" + tr("goodbye") + "[/green]")
         break
 
     # ---------------- VARIABLE ASSIGNMENT ----------------
@@ -43528,7 +43802,7 @@ while True:
             if var_name in ["x", "y", "z"]:
 
                 console.print(
-                    "[red]Cannot overwrite symbolic variables x, y, or z[/red]"
+                    "[red]" + tr("symbol_overwrite") + "[/red]"
                 )
 
                 continue
@@ -43543,7 +43817,7 @@ while True:
             )
 
         except Exception as e:
-            console.print(f"[red]Assignment Error:[/red] {e}")
+            console.print(f"[red]{tr('assignment_error')}:[/red] {e}")
 
         continue
 
@@ -43554,13 +43828,13 @@ while True:
         cmd = problem.strip().lower()
 
         if cmd == "absolute value":
-            console.print("Usage: absolute value of <expression> (for example, absolute value of -5).")
+            console.print(tr("usage_abs"))
             continue
 
         elif cmd.startswith("absolute value of "):
             value_expression = problem.strip()[len("absolute value of "):].strip()
             if not value_expression:
-                console.print("Usage: absolute value of <expression>.")
+                console.print(tr("usage_abs_empty"))
                 continue
             problem = f"abs({value_expression})"
             cmd = problem.lower()
@@ -43579,12 +43853,12 @@ while True:
 
         elif cmd == "deg":
             angle_mode = "deg"
-            console.print("[green]Angle mode set to degrees.[/green]")
+            console.print("[green]" + tr("angle_degrees") + "[/green]")
             continue
 
         elif cmd == "rad":
             angle_mode = "rad"
-            console.print("[green]Angle mode set to radians.[/green]")
+            console.print("[green]" + tr("angle_radians") + "[/green]")
             continue
 
         elif cmd in ("quit", "exit", "q"):
@@ -43594,7 +43868,7 @@ while True:
             try:
                 console.print(_execute_wikipedia_command(problem), markup=False)
             except Exception as e:
-                console.print(f"[red]Wikipedia error:[/red] {e}")
+                console.print(f"[red]{tr('wikipedia_error')}:[/red] {e}")
             continue
 
         try:
@@ -43613,4 +43887,4 @@ while True:
             history.append(f"{problem} = {expr}")
 
         except Exception as e:
-            console.print(f"[red]Error:[/red] {e}")
+            console.print(f"[red]{tr('error')}:[/red] {e}")
