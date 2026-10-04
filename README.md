@@ -175,7 +175,7 @@ Then run the platform’s file name, for example:
 python dave_linux.py
 ```
 
-**Windows PowerShell:**
+**Windows:**
 
 ```powershell
 .venv\Scripts\Activate.ps1
@@ -199,4 +199,40 @@ Some lookup and geocoding features also require an internet connection and an av
 - **A pip package fails to build on Android:** Install its Termux package if one exists. Some optional packages do not support Android.
 - **A plot does not open on Linux or Android:** The headless backend creates no GUI window. Run Dave on a desktop with a graphical display for interactive plots.
 
-**If there is a bug, or any feature you would like to add, please let me know in the comments (Dave Discussions).
+**If there is a bug in Dave, or the code in README.md isn't working, or any feature you would like to add to Dave, please let me know in the comments (Dave Discussions).
+
+## **Other Dave Installations**
+
+Install Dave's python wheel!
+
+**MacOS**
+
+```sh
+python3 -m pip install ./dave_package_py-0.0.2-py3-none-any.whl
+python3 -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
+```
+**Windows**
+
+```powershell
+py -m pip install .\dave_package_py-0.0.2-py3-none-any.whl
+py -c "import dave_package_py as dave; print(dave.calculate('2 + 2'))"
+```
+
+**Linux**
+
+```sh
+python3 -m pip install ./dave_package_py-0.0.2-py3-none-any.whl
+python3 -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
+```
+
+**Android (Termux)**
+
+```sh
+pkg update
+pkg install python python-numpy
+python -m pip install sympy rich
+python -m pip install --no-deps ./dave_package_py-0.0.2-py3-none-any.whl
+python -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
+```
+
+Termux provides NumPy through its own package manager; installing the wheel with `--no-deps` avoids pip trying to replace that native NumPy package. [Termux package discussion (https://github.com/termux/termux-packages/discussions/18938)](<https://github.com/termux/termux-packages/discussions/18938>)
