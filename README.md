@@ -157,7 +157,7 @@ wikipedia_page_info("Muon")
 
 Search results are numbered article titles. Summaries and page lookups keep the title you requested instead of replacing it with a similar-sounding title. Full articles are displayed with section headings, wrapped paragraphs, and lists. Wikipedia commands follow Dave’s selected interface language by default; pass a `language` code to override it.
 
-`selftest` reports every requested check as PASS or FAIL. It does not silently skip checks; missing functions or required packages are reported as failures.
+`selftest` reports every requested check as PASS or FAIL.
 
 ## Start Dave later
 
