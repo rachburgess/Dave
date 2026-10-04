@@ -202,20 +202,20 @@ Some lookup and geocoding features also require an internet connection and an av
 
 ## Install and run the Python wheel
 
-The importable Dave library is included at `dist/dave_package_py-0.0.2-py3-none-any.whl`. The wheel is a Python library; it does not start the interactive prompt. Use the platform scripts above (`python dave_macos.py`, `python dave_windows.py`, `python dave_linux.py`, or `python dave_android.py`) when you want the full Dave prompt.
+The importable Dave library is included at `dist/dave_package_py-0.0.3-py3-none-any.whl`. The wheel is a Python library; it does not start the interactive prompt. Use the platform scripts above (`python dave_macos.py`, `python dave_windows.py`, `python dave_linux.py`, or `python dave_android.py`) when you want the full Dave prompt.
 
 Install from the root of this repository:
 
 **macOS or Linux**
 
 ```sh
-python3 -m pip install ./dist/dave_package_py-0.0.2-py3-none-any.whl
+python3 -m pip install ./dist/dave_package_py-0.0.3-py3-none-any.whl
 ```
 
 **Windows PowerShell or Command Prompt**
 
 ```powershell
-py -m pip install .\dist\dave_package_py-0.0.2-py3-none-any.whl
+py -m pip install .\dist\dave_package_py-0.0.3-py3-none-any.whl
 ```
 
 **Android (Termux)**
@@ -223,8 +223,10 @@ py -m pip install .\dist\dave_package_py-0.0.2-py3-none-any.whl
 ```sh
 pkg install python python-numpy
 python -m pip install sympy rich
-python -m pip install --no-deps ./dist/dave_package_py-0.0.2-py3-none-any.whl
+python -m pip install --no-deps ./dist/dave_package_py-0.0.3-py3-none-any.whl
 ```
+
+The wheel also exposes `format_wikipedia_article(title, content)` to clean and wrap article text. Fetching an article with `wikipedia_article(title)` requires the optional `wikipedia` package and internet access.
 
 After installation, run a calculation through the library:
 

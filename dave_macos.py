@@ -35118,7 +35118,7 @@ def wikipedia_article(title, language=None):
 
 
 def _format_wikipedia_article(title, content, width=88):
-    """Render Wikipedia article text as readable, wrapped terminal sections."""
+    """Clean Wikipedia's mixed markup and wrap it as readable terminal text."""
     import re
     import textwrap
     width = max(36, int(width))
@@ -35129,19 +35129,44 @@ def _format_wikipedia_article(title, content, width=88):
     text = re.sub(r"\[\[([^]|]+)\|([^]]+)\]\]", r"\2", text)
     text = re.sub(r"\[\[([^]]+)\]\]", r"\1", text)
     text = re.sub(r"'{2,3}(.+?)'{2,3}", r"\1", text)
-    output = [title, "=" * min(len(title), width), ""]
+    # The wikipedia package often exposes MediaWiki's display-math wrapper
+    # literally. Keep the equation, but discard its presentation command.
+    text = re.sub(r"\{\\displaystyle\s*", "", text)
+    for source, replacement in ((r"\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}", r"(\1 / \2)"),
+                                (r"\\times", "×"), (r"\\cdot", "·"),
+                                (r"\\pi", "π"), (r"\\Gamma", "Γ"),
+                                (r"\\mu", "μ"), (r"\\mathrm\s*\{([^{}]+)\}", r"\1"),
+                                (r"\\text\s*\{([^{}]+)\}", r"\1")):
+        text = re.sub(source, replacement, text)
+    text = re.sub(r"\\(?:left|right)\b", "", text)
+    text = text.replace("{", "").replace("}", "")
+    text = re.sub(r"\\displaystyle|\\,|\\!", "", text)
+    text = re.sub(r"\\([A-Za-z]+)", r"\1", text)
+    output = [title, "═" * min(len(title), width), ""]
     paragraph = []
 
     def flush_paragraph():
         if paragraph:
             joined = " ".join(part.strip() for part in paragraph if part.strip())
             if joined:
-                output.extend(textwrap.wrap(joined, width=width))
+                output.extend(textwrap.wrap(joined, width=width, break_long_words=False,
+                                            break_on_hyphens=False))
                 output.append("")
             paragraph.clear()
 
-    for raw_line in text.splitlines():
+    raw_lines = text.replace("\r\n", "\n").replace("\r", "\n").splitlines()
+    separator = re.compile(r"^[─━─━═=\-_*~]{3,}$")
+    for index, raw_line in enumerate(raw_lines):
         line = raw_line.strip()
+        # Some article sources use a plain heading followed by a Unicode
+        # underline instead of MediaWiki's == Heading == notation.
+        if (line and index + 1 < len(raw_lines)
+                and separator.fullmatch(raw_lines[index + 1].strip())):
+            flush_paragraph()
+            output.extend((line, "─" * min(len(line), width), ""))
+            continue
+        if separator.fullmatch(line):
+            continue
         heading = re.fullmatch(r"={2,6}\s*(.*?)\s*={2,6}", line)
         if heading:
             flush_paragraph()
@@ -35177,14 +35202,19 @@ A long explanatory paragraph with enough words to wrap cleanly across a narrow t
 * First item
 * Second item"""
     rendered = _format_wikipedia_article("Muon", sample, width=40)
+    noisy = _format_wikipedia_article("Muon", """A sentence split\nacross source lines.\n\nHistory of discovery\n────────────────────\n\nEquation: {\\displaystyle \\frac{a}{b}}\n""", width=40)
     lines = rendered.splitlines()
-    if not rendered.startswith("Muon\n====") or "Mechanism\n" not in rendered:
+    if not rendered.startswith("Muon\n══") or "Mechanism\n" not in rendered:
         raise AssertionError("Article title or section headings were not formatted.")
     if "== Mechanism ==" in rendered or "• First item" not in rendered:
         raise AssertionError("Wiki heading or list markup was not converted.")
     if any(len(line) > 40 for line in lines):
         raise AssertionError("Article paragraphs were not wrapped to the requested width.")
-    return "article headings, paragraphs, and lists formatted"
+    if "A sentence split across source lines." not in noisy or "a / b" not in noisy:
+        raise AssertionError("Wrapped prose or display math was not cleaned up.")
+    if "History of discovery\n────────────────────" not in noisy:
+        raise AssertionError("Underline style section heading was not formatted.")
+    return "article headings, wrapped prose, math, and lists formatted"
 
 
 def _execute_wikipedia_command(expression):
