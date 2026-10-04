@@ -188,31 +188,6 @@ Dave’s required packages enable its core calculator. Other scientific integrat
 
 Some lookup and geocoding features also require an internet connection and an available external service.
 
-## Import Dave from another Python program
-
-`dave_package.py` is the portable, importable library module. Copy it beside your Python program; the same file works on macOS, Windows, Linux, and Android environments that provide Python. Importing it does not start the Dave prompt or install packages.
-
-The BMI and basic calculator wrapper use only Python’s standard library. Symbolic operations need SymPy, and meteorology functions need MetPy:
-
-```sh
-python -m pip install sympy metpy
-```
-
-Example:
-
-```python
-import dave_package as dave
-
-print(dave.calculate("sqrt(81) + 2**3"))
-print(dave.derivative("x**3", "x"))
-print(dave.bmi(70, 1.75))
-
-calculator = dave.DaveCalculator()
-print(calculator.calculate("2 + 2"))
-```
-
-Install Python packages inside your active virtual environment on desktop systems. On Android/Termux, compiled dependencies such as NumPy, SciPy, and Matplotlib should generally come from Termux’s package manager; `dave_package.py` itself does not require those packages.
-
 ## Troubleshooting
 
 - **`python` or `python3` not found:** Install Python, reopen the terminal, and check that Python is on your PATH. On Windows, try `py`.
@@ -220,3 +195,5 @@ Install Python packages inside your active virtual environment on desktop system
 - **PowerShell blocks activation:** Use the process-scoped execution policy command in the Windows section.
 - **A pip package fails to build on Android:** Install its Termux package if one exists. Some optional packages do not support Android.
 - **A plot does not open on Linux or Android:** The headless backend creates no GUI window. Run Dave on a desktop with a graphical display for interactive plots.
+
+**If there is a bug, or any feature you would like to add, please let me know in the comments (Dave Discussions).
