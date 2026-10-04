@@ -113,7 +113,6 @@ Then create an environment that can see the Termux-provided compiled packages:
 cd ~
 python -m venv --system-site-packages .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
 python -m pip install mendeleev sympy rich yfinance deep-translator
 ```
 
@@ -183,7 +182,7 @@ python dave_windows.py
 ```
 
 **Languages**
-Dave supports 5 languages, English, French, Japanese, Spanish, and Mandarin. Switch them with lang en, lang fr, lang fp, lang sp, or lang zh.
+Dave supports English, Spanish, Japanese, Mandarin Chinese, and French. At Dave’s prompt, switch languages with `lang en`, `lang es`, `lang ja`, `lang zh`, or `lang fr`.
 
 ## Optional scientific packages
 
@@ -201,38 +200,59 @@ Some lookup and geocoding features also require an internet connection and an av
 
 **If there is a bug in Dave, or the code in README.md isn't working, or any feature you would like to add to Dave, please let me know in the comments (Dave Discussions).
 
-## **Other Dave Installations**
+## Install and run the Python wheel
 
-Install Dave's python wheel!
+The importable Dave library is included at `dist/dave_package_py-0.0.2-py3-none-any.whl`. The wheel is a Python library; it does not start the interactive prompt. Use the platform scripts above (`python dave_macos.py`, `python dave_windows.py`, `python dave_linux.py`, or `python dave_android.py`) when you want the full Dave prompt.
 
-**MacOS**
+Install from the root of this repository:
+
+**macOS or Linux**
 
 ```sh
-python3 -m pip install ./dave_package_py-0.0.2-py3-none-any.whl
-python3 -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
+python3 -m pip install ./dist/dave_package_py-0.0.2-py3-none-any.whl
 ```
-**Windows**
+
+**Windows PowerShell or Command Prompt**
 
 ```powershell
-py -m pip install .\dave_package_py-0.0.2-py3-none-any.whl
-py -c "import dave_package_py as dave; print(dave.calculate('2 + 2'))"
-```
-
-**Linux**
-
-```sh
-python3 -m pip install ./dave_package_py-0.0.2-py3-none-any.whl
-python3 -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
+py -m pip install .\dist\dave_package_py-0.0.2-py3-none-any.whl
 ```
 
 **Android (Termux)**
 
 ```sh
-pkg update
 pkg install python python-numpy
 python -m pip install sympy rich
-python -m pip install --no-deps ./dave_package_py-0.0.2-py3-none-any.whl
+python -m pip install --no-deps ./dist/dave_package_py-0.0.2-py3-none-any.whl
+```
+
+After installation, run a calculation through the library:
+
+**macOS or Linux**
+
+```sh
+python3 -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
+```
+
+**Windows**
+
+```powershell
+py -c "import dave_package_py as dave; print(dave.calculate('2 + 2'))"
+```
+
+**Android (Termux)**
+
+```sh
 python -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
 ```
 
-Termux provides NumPy through its own package manager; installing the wheel with `--no-deps` avoids pip trying to replace that native NumPy package. [Termux package discussion (https://github.com/termux/termux-packages/discussions/18938)](<https://github.com/termux/termux-packages/discussions/18938>)
+Each command should print `4`. The wheel requires Python 3.10 or newer. Its core calculator needs NumPy, SymPy, and Rich. Termux supplies NumPy through its package manager; `--no-deps` prevents pip from trying to replace that native NumPy package. [Termux package guidance](https://github.com/termux/termux-packages/discussions/18938). Some optional science integrations may not be available on every operating system, particularly Android.
+
+Example use from another Python program:
+
+```python
+import dave_package_py as dave
+
+print(dave.calculate("sqrt(81) + 2**3"))
+print(dave.bmi(70, 1.75))
+```
