@@ -35252,7 +35252,7 @@ def _wikipedia_command_selftest():
             raise AssertionError("Wikipedia search result formatting failed.")
         globals()["wikipedia_article"] = lambda title, language=None: "Lead sentence.\n\n== Mechanism ==\n\nSecond paragraph."
         article = _execute_wikipedia_command('wikipedia_article("Muon")')
-        if not article.startswith("Muon\n====") or "Mechanism\n" not in article or "Second paragraph." not in article:
+        if not article.startswith("Muon\n══") or "Mechanism\n" not in article or "Second paragraph." not in article:
             raise AssertionError("Wikipedia full-article command did not format complete article text.")
         try:
             _execute_wikipedia_command('wikipedia_search(__import__("os"))')
