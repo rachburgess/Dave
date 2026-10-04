@@ -182,6 +182,9 @@ python dave_linux.py
 python dave_windows.py
 ```
 
+**Languages**
+Dave supports 5 languages, English, French, Japanese, Spanish, and Mandarin. Switch them with lang en, lang fr, lang fp, lang sp, or lang zh.
+
 ## Optional scientific packages
 
 Dave’s required packages enable its core calculator. Other scientific integrations load only when used and may need additional packages. Use Dave’s package status report to see which optional packages are installed. You do not need the entire optional package catalog for basic calculations.
