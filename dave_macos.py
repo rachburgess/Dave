@@ -35124,6 +35124,28 @@ def _format_wikipedia_article(title, content, width=88):
     width = max(36, int(width))
     title = str(title).strip() or "Wikipedia Article"
     text = str(content or "")
+    # Page extracts may repeat their title and split display equations across
+    # lines. Join each complete TeX display block before formatting the prose.
+    source_lines = text.replace("\r\n", "\n").replace("\r", "\n").splitlines()
+    folded_lines = []
+    index = 0
+    while index < len(source_lines):
+        line = source_lines[index]
+        if "{\\displaystyle" not in line:
+            folded_lines.append(line)
+            index += 1
+            continue
+        block = [line.strip()]
+        depth = line.count("{") - line.count("}")
+        index += 1
+        while depth > 0 and index < len(source_lines):
+            part = source_lines[index].strip()
+            if part:
+                block.append(part)
+            depth += part.count("{") - part.count("}")
+            index += 1
+        folded_lines.append(" ".join(block))
+    text = "\n".join(folded_lines)
     text = re.sub(r"<ref\b[^>]*>.*?</ref\s*>", "", text, flags=re.IGNORECASE | re.DOTALL)
     text = re.sub(r"<[^>]+>", "", text)
     text = re.sub(r"\[\[([^]|]+)\|([^]]+)\]\]", r"\2", text)
@@ -35132,13 +35154,22 @@ def _format_wikipedia_article(title, content, width=88):
     # The wikipedia package often exposes MediaWiki's display-math wrapper
     # literally. Keep the equation, but discard its presentation command.
     text = re.sub(r"\{\\displaystyle\s*", "", text)
-    for source, replacement in ((r"\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}", r"(\1 / \2)"),
+    fraction_pattern = re.compile(r"\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}")
+    for _ in range(32):
+        updated = fraction_pattern.sub(r"(\1 / \2)", text)
+        if updated == text:
+            break
+        text = updated
+    for source, replacement in ((r"\\sqrt\s*\{([^{}]*)\}", r"√(\1)"),
                                 (r"\\times", "×"), (r"\\cdot", "·"),
                                 (r"\\pi", "π"), (r"\\Gamma", "Γ"),
-                                (r"\\mu", "μ"), (r"\\mathrm\s*\{([^{}]+)\}", r"\1"),
-                                (r"\\text\s*\{([^{}]+)\}", r"\1")):
+                                (r"\\mu", "μ"), (r"\\theta", "θ"),
+                                (r"\\mathrm\s*\{([^{}]*)\}", r"\1"),
+                                (r"\\text\s*\{([^{}]*)\}", r"\1")):
         text = re.sub(source, replacement, text)
     text = re.sub(r"\\(?:left|right)\b", "", text)
+    text = re.sub(r"\^\{([^{}]*)\}", r"^(\1)", text)
+    text = re.sub(r"_\{([^{}]*)\}", r"_(\1)", text)
     text = text.replace("{", "").replace("}", "")
     text = re.sub(r"\\displaystyle|\\,|\\!", "", text)
     text = re.sub(r"\\([A-Za-z]+)", r"\1", text)
@@ -35154,8 +35185,12 @@ def _format_wikipedia_article(title, content, width=88):
                 output.append("")
             paragraph.clear()
 
-    raw_lines = text.replace("\r\n", "\n").replace("\r", "\n").splitlines()
+    raw_lines = text.splitlines()
     separator = re.compile(r"^[─━─━═=\-_*~]{3,}$")
+    if raw_lines and re.sub(r"^#{1,6}\s*", "", raw_lines[0].strip()).casefold() == title.casefold():
+        raw_lines.pop(0)
+        if raw_lines and separator.fullmatch(raw_lines[0].strip()):
+            raw_lines.pop(0)
     for index, raw_line in enumerate(raw_lines):
         line = raw_line.strip()
         # Some article sources use a plain heading followed by a Unicode
@@ -35214,6 +35249,12 @@ A long explanatory paragraph with enough words to wrap cleanly across a narrow t
         raise AssertionError("Wrapped prose or display math was not cleaned up.")
     if "History of discovery\n────────────────────" not in noisy:
         raise AssertionError("Underline style section heading was not formatted.")
+    duplicate_title = _format_wikipedia_article("Muon", "Muon\n====\n\nLead sentence.")
+    if duplicate_title.count("Muon") != 1:
+        raise AssertionError("The source article title was printed more than once.")
+    nested_math = _format_wikipedia_article("Muon", "{\\displaystyle \\frac{a+b}{c}}")
+    if "a+b / c" not in nested_math:
+        raise AssertionError("Nested display math was not converted cleanly.")
     return "article headings, wrapped prose, math, and lists formatted"
 
 
