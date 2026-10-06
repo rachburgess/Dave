@@ -226,7 +226,7 @@ python -m pip install sympy rich
 python -m pip install --no-deps ./dist/dave_package_py-0.0.5-py3-none-any.whl
 ```
 
-The wheel also exposes `format_wikipedia_article(title, content)` to clean and wrap article text, remove duplicate source titles, merge wrapped prose, and collapse duplicate split equations into readable math. Fetching an article with `wikipedia_article(title)` requires the optional `wikipedia` package and internet access.
+Fetching an article with `wikipedia_article(title)` requires the optional `wikipedia` package and internet access.
 
 After installation, run a calculation through the library:
 
