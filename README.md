@@ -139,11 +139,7 @@ Enter `help` for the in-program feature list, `selftest` to run Dave’s checks,
 
 ### Wikipedia search and articles
 
-Wikipedia commands use the optional `wikipedia` package and need an internet connection:
-
-```sh
-python -m pip install wikipedia
-```
+Wikipedia commands call the MediaWiki API through the `requests` package and need an internet connection. Install it with `python3 -m pip install requests` (or `py -m pip install requests` on Windows).
 
 At Dave’s prompt, search for pages, read a short exact-title summary, or display a complete article:
 
@@ -202,20 +198,20 @@ Some lookup and geocoding features also require an internet connection and an av
 
 ## Install and run the Python wheel
 
-The importable Dave library is included at `dist/dave_package_py-0.0.6-py3-none-any.whl`. The wheel is a Python library; it does not start the interactive prompt. Use the platform scripts above (`python dave_macos.py`, `python dave_windows.py`, `python dave_linux.py`, or `python dave_android.py`) when you want the full Dave prompt.
+The importable Dave library is included at `dist/dave_package_py-0.0.7-py3-none-any.whl`. The wheel is a Python library; it does not start the interactive prompt. Use the platform scripts above (`python dave_macos.py`, `python dave_windows.py`, `python dave_linux.py`, or `python dave_android.py`) when you want the full Dave prompt.
 
 Install from the root of this repository:
 
 **macOS or Linux**
 
 ```sh
-python3 -m pip install ./dist/dave_package_py-0.0.6-py3-none-any.whl
+python3 -m pip install ./dist/dave_package_py-0.0.7-py3-none-any.whl
 ```
 
 **Windows PowerShell or Command Prompt**
 
 ```powershell
-py -m pip install .\dist\dave_package_py-0.0.6-py3-none-any.whl
+py -m pip install .\dist\dave_package_py-0.0.7-py3-none-any.whl
 ```
 
 **Android (Termux)**
@@ -223,10 +219,10 @@ py -m pip install .\dist\dave_package_py-0.0.6-py3-none-any.whl
 ```sh
 pkg install python python-numpy
 python -m pip install sympy rich
-python -m pip install --no-deps ./dist/dave_package_py-0.0.6-py3-none-any.whl
+python -m pip install ./dist/dave_package_py-0.0.7-py3-none-any.whl
 ```
 
-The wheel exposes `format_wikipedia_article(title, content)` for clean paragraphs and readable equations. Fetching an article with `wikipedia_article(title)` requires the optional `wikipedia` package and internet access.
+The wheel exposes `format_wikipedia_article(title, content)` for clean paragraphs and readable equations. Fetching an article with `wikipedia_article(title)` uses `requests` and internet access. The wheel installs `requests` automatically. For standalone Dave scripts, install it with `python -m pip install requests`.
 
 After installation, run a calculation through the library:
 

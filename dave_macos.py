@@ -988,7 +988,6 @@ SCIENTIFIC_PACKAGES = {
     },
     "gsw": {"distribution": "gsw", "import": "gsw", "category": "oceanography"},
     "scikit_learn": {"distribution": "scikit-learn", "import": "sklearn", "category": "machine_learning"},
-    "wikipedia": {"distribution": "wikipedia", "import": "wikipedia", "category": "reference"},
 }
 
 
@@ -35021,72 +35020,115 @@ def population_exponential_projection(initial_population, growth_rate_per_time,
 
 
 def wikipedia_status():
-    """Report whether the optional wikipedia package is available."""
-    return _package_status("wikipedia")
+    """Report whether the requests-backed MediaWiki API client is available."""
+    try:
+        import requests
+    except ImportError:
+        return {"available": False, "version": None,
+                "error": "Install requests with python -m pip install requests",
+                "network_checked": False}
+    return {"available": True, "version": requests.__version__,
+            "network_checked": False}
 
 
 def _wikipedia_call(language, operation):
-    """Serialize Wikipedia requests and configure API etiquette headers."""
-    import json
+    """Call an operation with a language-bound MediaWiki API requester."""
     import os
+    import re
     import threading
-    wikipedia = load_scientific_package("wikipedia")
-    language = str(language or globals().get("language", "en")).strip().lower()
-    lock = getattr(wikipedia, "_dave_request_lock", None)
+
+    try:
+        import requests
+    except ImportError as exc:
+        raise RuntimeError(
+            "Wikipedia features require requests. Install it with "
+            "python -m pip install requests."
+        ) from exc
+
+    language_aliases = {
+        "english": "en", "spanish": "es", "japanese": "ja",
+        "mandarin": "zh", "chinese": "zh", "french": "fr",
+        "中文": "zh", "日本語": "ja", "español": "es", "français": "fr",
+    }
+    selected = str(language or globals().get("language", "en")).strip().lower()
+    selected = language_aliases.get(selected, selected)
+    if not re.fullmatch(r"[a-z][a-z0-9-]{1,11}", selected):
+        raise ValueError("language must be a valid Wikipedia language code.")
+
+    user_agent = os.environ.get("DAVE_WIKIPEDIA_USER_AGENT", "").strip()
+    if not user_agent:
+        user_agent = "DaveScientificCalculator/1.0 (https://github.com/rachburgess/Dave)"
+    session = requests.Session()
+    session.headers.update({"User-Agent": user_agent})
+
+    def request(params):
+        query = dict(params)
+        query.update({"format": "json", "formatversion": "2", "utf8": "1"})
+        endpoint = f"https://{selected}.wikipedia.org/w/api.php"
+        try:
+            response = session.get(endpoint, params=query, timeout=(5, 25))
+            response.raise_for_status()
+            payload = response.json()
+        except requests.exceptions.RequestException as exc:
+            raise RuntimeError(f"MediaWiki API request failed: {exc}") from exc
+        except ValueError as exc:
+            raise RuntimeError("MediaWiki returned a malformed JSON response.") from exc
+        if not isinstance(payload, dict):
+            raise RuntimeError("MediaWiki returned an unexpected JSON response.")
+        if "error" in payload:
+            error = payload["error"]
+            raise RuntimeError(
+                f"MediaWiki API error {error.get('code', '')}: "
+                f"{error.get('info', error)}"
+            )
+        return payload
+
+    lock = getattr(_wikipedia_call, "_dave_request_lock", None)
     if lock is None:
         lock = threading.RLock()
-        wikipedia._dave_request_lock = lock
-    with lock:
-        wikipedia.set_rate_limiting(True)
-        user_agent = os.environ.get(
-            "DAVE_WIKIPEDIA_USER_AGENT",
-            "DaveScientificCalculator/1.0 (https://www.mediawiki.org/wiki/API:Etiquette)")
-        set_user_agent = getattr(wikipedia, "set_user_agent", None)
-        if not callable(set_user_agent):
-            raise RuntimeError(
-                "The installed wikipedia package cannot set a User-Agent. "
-                "Upgrade it with: python -m pip install --upgrade wikipedia")
-        # wikipedia.languages() also makes an API request, so set the header first.
-        set_user_agent(user_agent)
-        wikipedia.set_lang(language)
-        try:
-            if language not in wikipedia.languages():
-                raise ValueError(f"Unsupported Wikipedia language code: {language}")
-            return operation(wikipedia)
-        except wikipedia.exceptions.DisambiguationError as exc:
-            return {"error": "disambiguation", "query": str(exc.title),
-                    "options": list(exc.options)}
-        except wikipedia.exceptions.PageError as exc:
-            return {"error": "page_not_found", "message": str(exc)}
-        except Exception as exc:
-            if isinstance(exc, json.JSONDecodeError) or type(exc).__name__ == "JSONDecodeError":
-                raise RuntimeError(
-                    "Wikipedia returned an empty or non-JSON response. Dave sent an "
-                    "identifying User-Agent; check network access or set "
-                    "DAVE_WIKIPEDIA_USER_AGENT to an identifying application string "
-                    "with contact information.") from exc
-            raise
+        _wikipedia_call._dave_request_lock = lock
+    try:
+        with lock:
+            return operation(request)
+    finally:
+        session.close()
+
+def _wikipedia_page_from_response(data):
+    """Return the first page in a query response or a clear missing-page result."""
+    pages = data.get("query", {}).get("pages", [])
+    if not pages or "missing" in pages[0]:
+        return {"error": "page_not_found", "message": "Wikipedia page was not found."}
+    return pages[0]
 
 
 def wikipedia_search(query, results=5, language=None):
-    """Search Wikipedia and return matching article titles (requires network/package)."""
+    """Search Wikipedia and return matching article titles (requires requests and internet access)."""
     query = str(query).strip()
     if not query:
         raise ValueError("query must not be empty.")
     if isinstance(results, bool) or not isinstance(results, int) or not 1 <= results <= 20:
         raise ValueError("results must be an integer from 1 to 20.")
-    return _wikipedia_call(language, lambda wiki: wiki.search(query, results=results))
+    def search(request):
+        data = request({"action": "query", "list": "search", "srsearch": query,
+                        "srlimit": results})
+        return [item["title"] for item in data.get("query", {}).get("search", [])]
+    return _wikipedia_call(language, search)
 
 
 def wikipedia_summary(query, sentences=3, language=None):
-    """Fetch a short Wikipedia article summary (requires network/package)."""
+    """Fetch a short Wikipedia article summary (requires requests and internet access)."""
     query = str(query).strip()
     if not query:
         raise ValueError("query must not be empty.")
     if isinstance(sentences, bool) or not isinstance(sentences, int) or not 1 <= sentences <= 10:
         raise ValueError("sentences must be an integer from 1 to 10.")
-    return _wikipedia_call(language, lambda wiki: wiki.summary(
-        query, sentences=sentences, auto_suggest=False, redirect=True))
+    def summary(request):
+        data = request({"action": "query", "prop": "extracts", "titles": query,
+                        "redirects": "1", "exintro": "1", "explaintext": "1",
+                        "exsentences": sentences})
+        page = _wikipedia_page_from_response(data)
+        return page if "error" in page else page.get("extract", "")
+    return _wikipedia_call(language, summary)
 
 
 def wikipedia_page_info(title, language=None, include_content=False):
@@ -35096,12 +35138,20 @@ def wikipedia_page_info(title, language=None, include_content=False):
         raise ValueError("title must not be empty.")
     if not isinstance(include_content, bool):
         raise ValueError("include_content must be True or False.")
-    def fetch(wiki):
-        page = wiki.page(title, auto_suggest=False, redirect=True)
-        result = {"title": page.title, "url": page.url, "pageid": page.pageid,
-                  "summary": page.summary}
+    def fetch(request):
+        params = {"action": "query", "prop": "info|extracts", "titles": title,
+                  "redirects": "1", "inprop": "url", "explaintext": "1"}
         if include_content:
-            result["content"] = page.content
+            params["exsectionformat"] = "wiki"
+        else:
+            params.update({"exintro": "1", "exsentences": "3"})
+        page = _wikipedia_page_from_response(request(params))
+        if "error" in page:
+            return page
+        result = {"title": page.get("title", title), "url": page.get("fullurl", ""),
+                  "pageid": page.get("pageid"), "summary": page.get("extract", "")}
+        if include_content:
+            result["content"] = page.get("extract", "")
         return result
     return _wikipedia_call(language, fetch)
 
@@ -35111,9 +35161,12 @@ def wikipedia_article(title, language=None):
     title = str(title).strip()
     if not title:
         raise ValueError("title must not be empty.")
-    def fetch(wiki):
-        page = wiki.page(title, auto_suggest=False, redirect=True)
-        return page.content
+    def fetch(request):
+        data = request({"action": "query", "prop": "extracts", "titles": title,
+                        "redirects": "1", "explaintext": "1",
+                        "exsectionformat": "wiki"})
+        page = _wikipedia_page_from_response(data)
+        return page if "error" in page else page.get("extract", "")
     return _wikipedia_call(language, fetch)
 
 
@@ -35399,6 +35452,8 @@ def _execute_wikipedia_command(expression):
     except (ValueError, TypeError) as exc:
         raise ValueError("Wikipedia command arguments must be literal strings, numbers, or booleans.") from exc
     result = globals()[node.func.id](*args, **kwargs)
+    if isinstance(result, dict) and result.get("error") == "page_not_found":
+        return f"Wikipedia page not found: {result.get('message', '')}".rstrip()
     if node.func.id == "wikipedia_article":
         article_title = args[0] if args else kwargs.get("title", "Wikipedia Article")
         return _format_wikipedia_article(article_title, result)
@@ -35439,41 +35494,42 @@ def _wikipedia_command_selftest():
 
 
 def _wikipedia_exact_title_selftest():
-    """Ensure summary and page requests avoid fuzzy title substitution."""
-    class FakePage:
-        title = "Muon"
-        url = "https://en.wikipedia.org/wiki/Muon"
-        pageid = 123
-        summary = "Muon article summary"
-        content = "Muon article paragraph one.\n\nMuon article paragraph two."
-
-    class FakeWiki:
-        summary_options = None
-        page_options = None
-        def summary(self, title, **options):
-            self.summary_options = options
-            return f"Summary for {title}"
-        def page(self, title, **options):
-            self.page_options = options
-            return FakePage()
-
-    fake = FakeWiki()
+    """Check MediaWiki API request shapes without making network requests."""
+    requests = []
+    def fake_request(params):
+        requests.append(dict(params))
+        page = {"title": "Muon", "pageid": 123,
+                "fullurl": "https://en.wikipedia.org/wiki/Muon",
+                "extract": "Muon summary" if "exintro" in params else
+                           "Muon article paragraph one.\n\nMuon article paragraph two."}
+        return {"query": {"pages": [page]}}
     original = globals()["_wikipedia_call"]
-    globals()["_wikipedia_call"] = lambda language, operation: operation(fake)
+    globals()["_wikipedia_call"] = lambda language, operation: operation(fake_request)
     try:
-        if wikipedia_summary("Muon") != "Summary for Muon":
-            raise AssertionError("Summary lookup changed the requested title.")
-        if fake.summary_options.get("auto_suggest") is not False:
-            raise AssertionError("Summary lookup must disable fuzzy suggestions.")
+        if wikipedia_summary("Muon") != "Muon summary":
+            raise AssertionError("MediaWiki summary extract was not returned.")
+        if requests[-1].get("exintro") != "1" or requests[-1].get("exsentences") != 3:
+            raise AssertionError("Summary request did not ask for the requested intro sentences.")
         info = wikipedia_page_info("Muon")
-        if info.get("title") != "Muon" or fake.page_options.get("auto_suggest") is not False:
-            raise AssertionError("Page lookup must preserve the requested title.")
+        if info.get("title") != "Muon" or info.get("pageid") != 123:
+            raise AssertionError("Page information was not mapped from the API response.")
         full_text = wikipedia_article("Muon")
-        if full_text != FakePage.content or fake.page_options.get("auto_suggest") is not False:
-            raise AssertionError("Full-article lookup must return the article content for the requested title.")
-        return "exact-title summary, page, and full-article lookups passed"
+        if "paragraph two" not in full_text or "exintro" in requests[-1]:
+            raise AssertionError("Full-article lookup did not request the complete extract.")
+        return "MediaWiki summary, page-info, and full-article requests passed"
     finally:
         globals()["_wikipedia_call"] = original
+
+
+def _wikipedia_status_selftest():
+    """Check that requests is installed and reported by the Wikipedia client."""
+    status = wikipedia_status()
+    if not status.get("available") or not status.get("version"):
+        raise AssertionError(status.get("error", "requests client is unavailable"))
+    import requests
+    if status["version"] != requests.__version__:
+        raise AssertionError("Wikipedia client reported the wrong requests version.")
+    return f"requests {status['version']} available; no network request made"
 
 
 def _wikipedia_input_selftest():
@@ -36662,7 +36718,7 @@ def selftest():
     test_value("chemical percent yield", lambda: percent_yield(8, 10), 80)
     test_value("Gini coefficient", lambda: gini_coefficient([0, 0, 1, 1]), 0.5)
     test_value("exponential population projection", lambda: population_exponential_projection(100, 0.1, math.log(2) / 0.1), 200)
-    test_function("Wikipedia package status", "wikipedia_status")
+    test("MediaWiki requests client status", _wikipedia_status_selftest)
     test("Wikipedia input validation (no network)", _wikipedia_input_selftest)
     test("Wikipedia command dispatch (no network)", _wikipedia_command_selftest)
     test("Wikipedia exact-title lookup (no network)", _wikipedia_exact_title_selftest)
@@ -41932,18 +41988,18 @@ doppler_frequency_hz(source_frequency_hz, sound_speed_m_s, source_toward_observe
     EOS-80 density is the atmospheric-pressure approximation; depth uses constant density/gravity.
     Doppler velocities are positive when moving toward the other object.
 
-WIKIPEDIA SEARCH (OPTIONAL wikipedia PACKAGE + NETWORK)
+WIKIPEDIA SEARCH (MEDIAWIKI API + NETWORK)
 
 wikipedia_status()
-    Report whether the optional Wikipedia client package is installed.
+    Report that the built-in MediaWiki API client is available.
 wikipedia_search(query, results=5, language="en")
 wikipedia_summary(query, sentences=3, language="en")
 wikipedia_page_info(title, language="en", include_content=False)
 wikipedia_article(title, language=None)
     Search titles, fetch summaries, page details, or full article text.
     Full articles are formatted with wrapped paragraphs, section headings, and lists.
-    Install with: python -m pip install wikipedia
-    Calls use Wikipedia's public API and rate limiting; network access is required.
+    Uses the requests package and requires internet access. Install requests with python -m pip install requests.
+    Calls use the public MediaWiki API; internet access is required.
 
 [bold yellow]ADVANCED JAX / DIFFERENTIABLE COMPUTING[/bold yellow]
 ────────────────────────────────────────────────────────────
@@ -42763,8 +42819,8 @@ LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
        'meteorology, climate, ecology, geology, geography, oceanography, engineering, '
        'materials, neuroscience, quantum science, signal processing, and visualization.\n'
        'WIKIPEDIA: wikipedia_search("topic"), wikipedia_summary("topic"), '
-       'wikipedia_article("title"). Requires the optional wikipedia package and internet '
-       'access.\n'
+       'wikipedia_article("title"). Uses the MediaWiki API through requests.\n'
+       'Install requests with python -m pip install requests; internet access is required.\n'
        'AVAILABLE FUNCTION COMMANDS:',
  'es': 'DAVE — AYUDA DE LA CALCULADORA CIENTÍFICA\n'
        'IDIOMA: Configúralo con lang en, lang es, lang ja, lang zh o lang fr. Introduce '
@@ -42777,8 +42833,7 @@ LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
        'clima, ecología, geología, geografía, oceanografía, ingeniería, materiales, '
        'neurociencia, ciencia cuántica, procesamiento de señales y visualización.\n'
        'WIKIPEDIA: wikipedia_search("tema"), wikipedia_summary("tema"), '
-       'wikipedia_article("título"). Requiere el paquete opcional wikipedia y conexión a '
-       'internet.\n'
+       'wikipedia_article("título"). Requiere requests (python -m pip install requests) y conexión a internet.\n'
        'COMANDOS DE FUNCIONES DISPONIBLES:',
  'fr': 'DAVE — AIDE DE LA CALCULATRICE SCIENTIFIQUE\n'
        'LANGUE : Choisissez avec lang en, lang es, lang ja, lang zh ou lang fr. '
@@ -42792,8 +42847,7 @@ LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
        'océanographie, ingénierie, matériaux, neurosciences, science quantique, '
        'traitement du signal et visualisation.\n'
        'WIKIPÉDIA : wikipedia_search("sujet"), wikipedia_summary("sujet"), '
-       'wikipedia_article("titre"). Nécessite le paquet optionnel wikipedia et une '
-       'connexion Internet.\n'
+       'wikipedia_article("titre"). Nécessite requests (python -m pip install requests) et une connexion Internet.\n'
        'RÉPERTOIRE DES COMMANDES DE FONCTIONS DISPONIBLES :',
  'ja': 'DAVE — 科学計算機ヘルプ\n'
        '言語: lang en、lang es、lang ja、lang zh、lang frで設定します。関数名はコマンド一覧の表記どおりに入力します。\n'
@@ -42802,14 +42856,13 @@ LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
        '科学分野: '
        '数学、代数、微積分、統計、確率、天文学、物理学、化学、生物学、生理学、医学、薬物動態、気象、気候、生態学、地質学、地理学、海洋学、工学、材料科学、神経科学、量子科学、信号処理、可視化。\n'
        'Wikipedia: '
-       'wikipedia_search("トピック")、wikipedia_summary("トピック")、wikipedia_article("記事名")。任意のwikipediaパッケージとネット接続が必要です。\n'
+       'wikipedia_search("トピック")、wikipedia_summary("トピック")、wikipedia_article("記事名")。requestsパッケージとネット接続が必要です。\n'
        '利用可能な関数コマンド:',
  'zh': 'DAVE — 科学计算器帮助\n'
        '语言：使用 lang en、lang es、lang ja、lang zh 或 lang fr 设置。函数名称请按命令目录中的写法输入。\n'
        '使用：输入 2 + 2 或 sqrt(81) 等算式。输入 help 查看本指南，selftest 检查函数，history 查看历史，quit 退出。\n'
        '科学领域：数学、代数、微积分、统计、概率、天文学、物理、化学、生物、生理学、医学、药代动力学、气象、气候、生态、地质、地理、海洋学、工程、材料、神经科学、量子科学、信号处理和可视化。\n'
-       '维基百科：wikipedia_search("主题")、wikipedia_summary("主题")、wikipedia_article("标题")。需要可选 '
-       'wikipedia 软件包和互联网连接。\n'
+       '维基百科：wikipedia_search("主题")、wikipedia_summary("主题")、wikipedia_article("标题")。需要 requests 软件包（python -m pip install requests）和互联网连接。\n'
        '可用函数命令目录：'}
 ABOUT_TEXTS = {'en': 'Dave is a scientific calculator with mathematical, statistical, and scientific '
        'tools. Set the interface language with lang en, lang es, lang ja, lang zh, or '
