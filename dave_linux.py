@@ -35114,7 +35114,7 @@ def wikipedia_article(title, language=None):
     return _wikipedia_call(language, fetch)
 
 
-def _format_wikipedia_article(title, content, width=88):
+def _format_wikipedia_article(title, content, width=72):
     """Clean Wikipedia's mixed markup and wrap it as readable terminal text."""
     import re
     import textwrap
@@ -35141,10 +35141,32 @@ def _format_wikipedia_article(title, content, width=88):
                 block.append(part)
             depth += part.count("{") - part.count("}")
             index += 1
+        # Wikipedia's text extract may contain a visual, line-broken rendering
+        # of an equation immediately before the actual TeX source. Drop that
+        # fragment when it is a run of short symbol-only lines; the TeX block
+        # below is the recoverable equation and avoids displaying it twice.
+        fragment_count = 0
+        remove_from = len(folded_lines)
+        cursor = len(folded_lines) - 1
+        while cursor >= 0 and len(folded_lines) - cursor <= 28:
+            previous = folded_lines[cursor].strip()
+            if not previous:
+                cursor -= 1
+                continue
+            if len(previous) <= 24 and not re.search(r"[A-Za-z]{4,}", previous):
+                fragment_count += 1
+                remove_from = cursor
+                cursor -= 1
+                continue
+            break
+        if fragment_count >= 3:
+            del folded_lines[remove_from:]
         folded_lines.append(" ".join(block))
     text = "\n".join(folded_lines)
     text = re.sub(r"<ref\b[^>]*>.*?</ref\s*>", "", text, flags=re.IGNORECASE | re.DOTALL)
     text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("\u200b", "").replace("\u2060", "")
+    text = text.replace("\u00a0", " ").replace("\u202f", " ")
     text = re.sub(r"\[\[([^]|]+)\|([^]]+)\]\]", r"\2", text)
     text = re.sub(r"\[\[([^]]+)\]\]", r"\1", text)
     text = re.sub(r"'{2,3}(.+?)'{2,3}", r"\1", text)
@@ -35170,6 +35192,7 @@ def _format_wikipedia_article(title, content, width=88):
     text = text.replace("{", "").replace("}", "")
     text = re.sub(r"\\displaystyle|\\,|\\!", "", text)
     text = re.sub(r"\\([A-Za-z]+)", r"\1", text)
+    text = re.sub(r"(?<=\d)\*(?=\d)", "×", text)
     output = [title, "═" * min(len(title), width), ""]
     paragraph = []
 
