@@ -35170,28 +35170,120 @@ def _format_wikipedia_article(title, content, width=72):
     text = re.sub(r"\[\[([^]|]+)\|([^]]+)\]\]", r"\2", text)
     text = re.sub(r"\[\[([^]]+)\]\]", r"\1", text)
     text = re.sub(r"'{2,3}(.+?)'{2,3}", r"\1", text)
-    # The wikipedia package often exposes MediaWiki's display-math wrapper
-    # literally. Keep the equation, but discard its presentation command.
-    text = re.sub(r"\{\\displaystyle\s*", "", text)
-    fraction_pattern = re.compile(r"\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}")
-    for _ in range(32):
-        updated = fraction_pattern.sub(r"(\1 / \2)", text)
-        if updated == text:
+    def latex_to_plain(source):
+        """Convert the common LaTeX commands used in Wikipedia equations."""
+        greek = {"alpha": "α", "beta": "β", "gamma": "γ", "Gamma": "Γ",
+                 "delta": "δ", "Delta": "Δ", "epsilon": "ε", "theta": "θ",
+                 "lambda": "λ", "mu": "μ", "nu": "ν", "pi": "π",
+                 "rho": "ρ", "sigma": "σ", "Sigma": "Σ", "tau": "τ",
+                 "phi": "φ", "omega": "ω", "hbar": "ħ"}
+        symbols = {"times": "×", "cdot": "·", "pm": "±", "le": "≤",
+                   "ge": "≥", "neq": "≠", "approx": "≈", "infty": "∞",
+                   "partial": "∂", "sim": "∼", "to": "→", "rightarrow": "→"}
+
+        def group(index):
+            while index < len(source) and source[index].isspace():
+                index += 1
+            if index >= len(source) or source[index] != "{":
+                return (source[index:index + 1], index + 1) if index < len(source) else ("", index)
+            value, end = sequence(index + 1, stop=True)
+            return value, end
+
+        def sequence(index=0, stop=False):
+            pieces = []
+            while index < len(source):
+                char = source[index]
+                if char == "}" and stop:
+                    return "".join(pieces), index + 1
+                if char == "\\":
+                    index += 1
+                    if index >= len(source):
+                        break
+                    if source[index].isalpha():
+                        end = index + 1
+                        while end < len(source) and source[end].isalpha():
+                            end += 1
+                        command = source[index:end]
+                        index = end
+                    else:
+                        command = source[index]
+                        index += 1
+                    if command in {"frac", "dfrac", "tfrac"}:
+                        numerator, index = group(index)
+                        denominator, index = group(index)
+                        pieces.append(f"({numerator.strip()})/({denominator.strip()})")
+                    elif command in {"sqrt"}:
+                        radicand, index = group(index)
+                        pieces.append(f"√({radicand.strip()})")
+                    elif command in {"mathrm", "mathbf", "mathit", "text", "operatorname"}:
+                        value, index = group(index)
+                        pieces.append(value)
+                    elif command in {"left", "right", "displaystyle", ",", "!", ";", "quad", "qquad"}:
+                        if command in {"quad", "qquad"}:
+                            pieces.append(" ")
+                    elif command in greek:
+                        pieces.append(greek[command])
+                    elif command in symbols:
+                        pieces.append(symbols[command])
+                    elif command in {"ln", "log", "sin", "cos", "tan", "exp"}:
+                        pieces.append(command)
+                    else:
+                        pieces.append(command)
+                    continue
+                if char in "^_":
+                    operator = char
+                    value, index = group(index + 1)
+                    value = value.strip()
+                    pieces.append(operator + (value if len(value) == 1 else f"({value})"))
+                    continue
+                if char == "{":
+                    value, index = group(index)
+                    pieces.append(value)
+                    continue
+                if char == "}":
+                    index += 1
+                    continue
+                if char == "~":
+                    pieces.append(" ")
+                else:
+                    pieces.append(char)
+                index += 1
+            return "".join(pieces), index
+
+        plain, _ = sequence()
+        plain = re.sub(r"(?<=\d)(?=[A-Za-zα-ωΓΔ∂π])", " ", plain)
+        plain = re.sub(r"(?<=[A-Za-zα-ωΓΔ∂π])(?=[A-Za-zα-ωΓΔ∂π])", " ", plain)
+        plain = re.sub(r"\s*/\s*", " / ", plain)
+        plain = re.sub(r"\s+", " ", plain)
+        return plain.strip()
+
+    # Convert full, balanced display-math wrappers. A regex cannot safely find
+    # their end because equations contain nested braces (fractions/subscripts).
+    marker = r"{\displaystyle"
+    converted = []
+    cursor = 0
+    while True:
+        start = text.find(marker, cursor)
+        if start < 0:
+            converted.append(text[cursor:])
             break
-        text = updated
-    for source, replacement in ((r"\\sqrt\s*\{([^{}]*)\}", r"√(\1)"),
-                                (r"\\times", "×"), (r"\\cdot", "·"),
-                                (r"\\pi", "π"), (r"\\Gamma", "Γ"),
-                                (r"\\mu", "μ"), (r"\\theta", "θ"),
-                                (r"\\mathrm\s*\{([^{}]*)\}", r"\1"),
-                                (r"\\text\s*\{([^{}]*)\}", r"\1")):
-        text = re.sub(source, replacement, text)
-    text = re.sub(r"\\(?:left|right)\b", "", text)
-    text = re.sub(r"\^\{([^{}]*)\}", r"^(\1)", text)
-    text = re.sub(r"_\{([^{}]*)\}", r"_(\1)", text)
-    text = text.replace("{", "").replace("}", "")
-    text = re.sub(r"\\displaystyle|\\,|\\!", "", text)
-    text = re.sub(r"\\([A-Za-z]+)", r"\1", text)
+        converted.append(text[cursor:start])
+        depth = 0
+        end = start
+        while end < len(text):
+            if text[end] == "{":
+                depth += 1
+            elif text[end] == "}":
+                depth -= 1
+                if depth == 0:
+                    end += 1
+                    break
+            end += 1
+        body_start = start + len(marker)
+        body_end = end - 1 if depth == 0 else end
+        converted.append(latex_to_plain(text[body_start:body_end]))
+        cursor = end
+    text = "".join(converted)
     text = re.sub(r"(?<=\d)\*(?=\d)", "×", text)
     output = [title, "═" * min(len(title), width), ""]
     paragraph = []
@@ -35265,7 +35357,7 @@ A long explanatory paragraph with enough words to wrap cleanly across a narrow t
         raise AssertionError("Wiki heading or list markup was not converted.")
     if any(len(line) > 40 for line in lines):
         raise AssertionError("Article paragraphs were not wrapped to the requested width.")
-    if "A sentence split across source lines." not in noisy or "a / b" not in noisy:
+    if "A sentence split across source lines." not in noisy or "(a) / (b)" not in noisy:
         raise AssertionError("Wrapped prose or display math was not cleaned up.")
     if "History of discovery\n────────────────────" not in noisy:
         raise AssertionError("Underline style section heading was not formatted.")
@@ -35273,8 +35365,21 @@ A long explanatory paragraph with enough words to wrap cleanly across a narrow t
     if duplicate_title.count("Muon") != 1:
         raise AssertionError("The source article title was printed more than once.")
     nested_math = _format_wikipedia_article("Muon", "{\\displaystyle \\frac{a+b}{c}}")
-    if "a+b / c" not in nested_math:
+    if "(a+b) / (c)" not in nested_math:
         raise AssertionError("Nested display math was not converted cleanly.")
+    decay_rate = _format_wikipedia_article(
+        "Muon",
+        "{\\displaystyle \\Gamma = \\frac{G_{\\text{F}}^{2}m_{\\mu}^{5}}"
+        "{192\\pi^{3}} I(\\frac{m_{\\text{e}}^{2}}{m_{\\mu}^{2}})}",
+    )
+    expected_rate = "Γ = (G_F^2 m_μ^5) / (192 π^3) I((m_e^2) / (m_μ^2))"
+    if expected_rate not in decay_rate or "\\frac" in decay_rate or "displaystyle" in decay_rate:
+        raise AssertionError("Muon decay-rate equation was not rendered as readable math.")
+    duplicate_math = _format_wikipedia_article(
+        "Muon", "3.4 ∗\n\n10\n\n− 5\n\n{\\displaystyle 3.4*10^{-5}}"
+    )
+    if duplicate_math.count("3.4×10^(-5)") != 1 or "3.4 ∗" in duplicate_math:
+        raise AssertionError("Split duplicate math fragments were not removed.")
     return "article headings, wrapped prose, math, and lists formatted"
 
 
