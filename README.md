@@ -17,7 +17,7 @@ Copy the selected file to your device and run the matching instructions below fr
 
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install python3.15 conda
+brew install python@3.15
 python3 -m venv .venv
 source .venv/bin/activate
 pip3 install --break-system-packages affine altair anndata APLpy astroML astroplan astropy astropy-healpix astropy-iers-data astroquery biom-format biopython bioregistry biotite Brian2 bruges chemicals chemparse chempy cmap cmasher cmyt colorspacious contourpy cpsat-logutils dask-image demes DendroPy diffrax dipy dynamiqs earthpy elephant emcee equinox esda flopy fluids folium formulaic freud-analysis GDAL gempy gempy-engine geographiclib geopandas geopy giddy GridDataFormats gsw h5py hdmf jplephem libpysal lineax lmfit mapclassify matminer matplotlib mda-xdrlib MDAnalysis mdapy mdtraj mendeleev MetPy mmtf-python momepy movingpandas mpltern mpmath mrcfile msprime nengo neo nibabel numcodecs numpy openmm opt_einsum optimistix osmnx periodictable PIMS Pint plasmaply plotly poliastro PubChemPy PuLP pyarrow PyAVM pybedtools pydeck pyerfa pymatgen pymatgen-core pynapple pynwb pyogrio pyproj pyregion pyrolite pysal pysam PySmeQcd pyvo qmsolve quantecon quantities qutip radioactivedecay rasterio rasterstats rdkit reproject Rtree scanpy scikit-bio scikit-image scikit-learn scipy shapely slicerator spaghetti spglib spglm spint splot spml spopt spreg statsmodels striplog sunpy sym sympy thermo tifffile tobler topologicpy topoly torchmd trx-python tskit uncertainties unyt wellpathpy welly xarray xyzservices yt zarr
