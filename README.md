@@ -15,15 +15,11 @@ Copy the selected file to your device and run the matching instructions below fr
 
 ## macOS
 
-1. Install Python 3.12 or newer from [python.org](https://www.python.org/downloads/).
-2. Open Terminal and move to the folder containing `dave_macos.py`.
-3. Create and activate a virtual environment, then install Dave’s required packages:
-
 ```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install mendeleev sympy numpy matplotlib rich yfinance pandas scipy deep-translator
+pip3 install --break-system-packages affine altair anndata APLpy astroML astroplan astropy astropy-healpix astropy-iers-data astroquery biom-format biopython bioregistry biotite Brian2 bruges chemicals chemparse chempy cmap cmasher cmyt colorspacious contourpy cpsat-logutils dask-image demes DendroPy diffrax dipy dynamiqs earthpy elephant emcee equinox esda flopy fluids folium formulaic freud-analysis GDAL gempy gempy-engine geographiclib geopandas geopy giddy GridDataFormats gsw h5py hdmf jplephem libpysal lineax lmfit mapclassify matminer matplotlib mda-xdrlib MDAnalysis mdapy mdtraj mendeleev MetPy mmtf-python momepy movingpandas mpltern mpmath mrcfile msprime nengo neo nibabel numcodecs numpy openmm opt_einsum optimistix osmnx periodictable PIMS Pint plasmaply plotly poliastro PubChemPy PuLP pyarrow PyAVM pybedtools pydeck pyerfa pymatgen pymatgen-core pynapple pynwb pyogrio pyproj pyregion pyrolite pysal pysam PySmeQcd pyvo qmsolve quantecon quantities qutip radioactivedecay rasterio rasterstats rdkit reproject Rtree scanpy scikit-bio scikit-image scikit-learn scipy shapely slicerator spaghetti spglib spglm spint splot spml spopt spreg statsmodels striplog sunpy sym sympy thermo tifffile tobler topologicpy topoly torchmd trx-python tskit uncertainties unyt wellpathpy welly xarray xyzservices yt zarr
 ```
 
 4. Start Dave:
@@ -47,7 +43,8 @@ From the folder containing `dave_linux.py`, create the environment and install d
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install mendeleev sympy numpy matplotlib rich yfinance pandas scipy deep-translator
+pip3 install --break-system-packages affine altair anndata APLpy astroML astroplan astropy astropy-healpix astropy-iers-data astroquery biom-format biopython bioregistry biotite Brian2 bruges chemicals chemparse chempy cmap cmasher cmyt colorspacious contourpy cpsat-logutils dask-image demes DendroPy diffrax dipy dynamiqs earthpy elephant emcee equinox esda flopy fluids folium formulaic freud-analysis GDAL gempy gempy-engine geographiclib geopandas geopy giddy GridDataFormats gsw GUDHI h5py hdmf jplephem libpysal lineax lmfit mapclassify matminer matplotlib mda-xdrlib MDAnalysis mdapy mdtraj mendeleev MetPy mmtf-python momepy movingpandas mpltern mpmath mrcfile msprime nengo neo nibabel numcodecs numpy openmm opt_einsum optimistix osmnx periodictable PIMS Pint plasmaply plotly poliastro PubChemPy PuLP pyarrow PyAVM pybedtools pydeck pyerfa pymatgen pymatgen-core pynapple pynwb pyogrio pyproj pyregion pyrolite pysal pysam PySmeQcd pyvo qmsolve quantecon quantities qutip radioactivedecay rasterio rasterstats rdkit reproject Rtree scanpy scikit-bio scikit-image scikit-learn scipy shapely slicerator spaghetti spglib spglm spint splot spml spopt spreg statsmodels striplog sunpy sym sympy thermo tifffile tobler topologicpy topoly torchmd trx-python tskit uncertainties unyt wellpathpy welly xarray xyzservices yt zarr
+What's Included:
 ```
 
 Start Dave with:
@@ -68,7 +65,8 @@ On a Linux desktop, plots use the available Tk display backend. On a headless ma
 py -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install mendeleev sympy numpy matplotlib rich yfinance pandas scipy deep-translator
+pip3 install --break-system-packages affine altair anndata APLpy astroML astroplan astropy astropy-healpix astropy-iers-data astroquery biom-format biopython bioregistry biotite Brian2 bruges chemicals chemparse chempy cmap cmasher cmyt colorspacious contourpy cpsat-logutils dask-image demes DendroPy diffrax dipy dynamiqs earthpy elephant emcee equinox esda flopy fluids folium formulaic freud-analysis GDAL gempy gempy-engine geographiclib geopandas geopy giddy GridDataFormats gsw GUDHI h5py hdmf jplephem libpysal lineax lmfit mapclassify matminer matplotlib mda-xdrlib MDAnalysis mdapy mdtraj mendeleev MetPy mmtf-python momepy movingpandas mpltern mpmath mrcfile msprime nengo neo nibabel numcodecs numpy openmm opt_einsum optimistix osmnx periodictable PIMS Pint plasmaply plotly poliastro PubChemPy PuLP pyarrow PyAVM pybedtools pydeck pyerfa pymatgen pymatgen-core pynapple pynwb pyogrio pyproj pyregion pyrolite pysal pysam PySmeQcd pyvo qmsolve quantecon quantities qutip radioactivedecay rasterio rasterstats rdkit reproject Rtree scanpy scikit-bio scikit-image scikit-learn scipy shapely slicerator spaghetti spglib spglm spint splot spml spopt spreg statsmodels striplog sunpy sym sympy thermo tifffile tobler topologicpy topoly torchmd trx-python tskit uncertainties unyt wellpathpy welly xarray xyzservices yt zarr
+What's Included:
 ```
 
 If PowerShell blocks environment activation, run this in that PowerShell window and activate again:
