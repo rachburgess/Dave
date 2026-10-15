@@ -137,23 +137,6 @@ absolute value of -5
 
 Enter `help` for the in-program feature list, `selftest` to run Dave’s checks, or `quit` to exit.
 
-### Wikipedia search and articles
-
-Wikipedia commands call the MediaWiki API through the `requests` package and need an internet connection. Install it with `python3 -m pip install requests` (or `py -m pip install requests` on Windows).
-
-At Dave’s prompt, search for pages, read a short exact-title summary, or display a complete article:
-
-```text
-wikipedia_search("photosynthesis")
-wikipedia_summary("Muon")
-wikipedia_article("Muon")
-wikipedia_page_info("Muon")
-```
-
-Search results are numbered article titles. Summaries and page lookups keep the title you requested instead of replacing it with a similar-sounding title. Full articles are displayed with section headings, wrapped paragraphs, and lists. Wikipedia commands follow Dave’s selected interface language by default; pass a `language` code to override it.
-
-`selftest` reports every requested check as PASS or FAIL.
-
 ## Start Dave later
 
 Each time you open a new terminal, activate the virtual environment again before running Dave.
