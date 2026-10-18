@@ -2,7 +2,7 @@
 
 Dave is a command-line calculator with standard and scientific math, symbolic algebra, and optional tools for astronomy, chemistry, biology, meteorology, physiology, and other scientific fields.
 
-This guide starts from a computer or phone with no Python packages installed. Keep Dave’s packages in a virtual environment where possible. The platform builds are:
+This guide starts from a computer or phone with no Python packages installed. Keep Dave's packages in a virtual environment where possible. The platform builds are:
 
 | Platform | Dave file |
 | --- | --- |
@@ -15,242 +15,212 @@ Copy the selected file to your device and run the matching instructions below fr
 
 ## macOS
 
-1. Install Python 3.12 or newer from [python.org](https://www.python.org/downloads/).
+1. Install Python 3.12 or newer from [python.org](https://www.python.org/downloads/). **Note: Full compatibility with all packages requires Python 3.14 or earlier; some packages are incompatible with Python 3.15+.**
 2. Open Terminal and move to the folder containing `dave_macos.py`.
-3. Create and activate a virtual environment, then install Dave’s required packages:
+3. Run Dave. On first launch, Dave automatically installs any missing required packages from `requirements.txt`:
+   ```sh
+   python3 dave_macos.py
+   ```
+   To install packages manually instead:
+   ```sh
+   python3 -m venv venv
+   source venv/bin/activate
+   python -m pip install --upgrade pip --upgrade-strategy eager
+   pip install -r requirements.txt
+   ```
 
 ```sh
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install mendeleev sympy numpy matplotlib rich yfinance pandas scipy deep-translator
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install --upgrade pip --upgrade-strategy eager
+pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm  # Note: openmm may not be available for Python 3.15+
 ```
 
-4. Start Dave:
+### Notes on Package Compatibility
 
-```sh
-python dave_macos.py
-```
+The following packages have known compatibility issues with Python 3.15+:
+
+- **openmm**: No compatible versions available for Python 3.15+. Please use the latest available version (Python 3.14) or remove this dependency if not needed.
+- **GUDHI**: Requires Python 3.5-3.6 only and is incompatible with Python 3.12+. If you need GUDHI, use Python 3.6.
+
+### Complete Package List
+
+Dave supports over 150 scientific packages across multiple domains:
+
+**Core Dependencies:**
+- `mendeleev`: Chemistry calculations (element data, molecular formulas, reactions)
+- `sympy`: Symbolic mathematics
+- `numpy`: Numerical computing
+- `matplotlib`: Plotting
+- `rich`: Console formatting and printing
+- `pandas`: Data frames
+- `scipy`: Scientific computing
+
+**Astronomy:**
+- `astropy`, `skyfield`, `APLpy`, `astroML`, `astroplan`, `astropy_healpix`, `astropy_iers_data`, `astroquery`, `jplephem`, `poliastro`, `pyerfa`, `pyvo`, `reproject`, `sunpy`
+
+**Biology/Bioinformatics:**
+- `biopython`, `anndata`, `biom-format`, `biotite`, `scanpy`, `dendropy`, `msprime`, `pybedtools`, `pysam`, `scikit-bio`, `tskit`
+
+**Machine Learning/Data Science:**
+- `scikit-learn`, `statsmodels`, `tensorflow`, `torchmd`, `qutip`, `quantities`, `lmfit`, `xarray`, `altair`, `pyarrow`, `dask-image`, `spglm`
+
+**Physics/Computational Chemistry:**
+- `openmm`, `pymatgen`, `mdtraj`, `bioformats`, `nlopt`, `chemicals`, `chemparse`, `gsw`, `fluids`, `equinox`, `diffrax`, `qmsolve`
+
+**Geosciences/Remote Sensing:**
+- `GDAL`, `geopandas`, `rasterio`, `earthpy`, `pyproj`, `geojson`, `mapclassify`, `spglib`, `topologicpy`
+
+**Mathematics/Analysis:**
+- `mpmath`, `freud-analysis`, `dipy`, `emcee`, `shapely`, `hdmf`, `mdapy`, `nibabel`, `pynwb`, `neurodepry`, `pnm`, `splot`
+
+**Other Tools:**
+- `yfinance`, `deep-translator`, `matplotlib-tern-mpltern`, `mpltern`, `striplog-spglib`, `spopt`, `spreg`, `spglm`, `xyztimeseries`, `xyzservices`, `yt`, `momepy`, `movingpandas`, `spint`, `splot`, `PySmeQcd`, `PIMS`, `PubChemPy`, `PuLP`, `PyAVM`, `PyWavelets`, `tobler`, `trx-python`, `welly`, `wellpathpy`
+
+**Note:** Installation will take significant time due to the large number of packages. Consider installing dependencies incrementally and only what you need.
 
 ## Linux
 
-Install Python 3.12 or newer and its venv support using your distribution’s package manager. For example, on Debian or Ubuntu:
+1. Install Python 3.12 or newer from your package manager (e.g., `apt install python3 python3-pip`, ensure pip is up-to-date).
+2. Move to the folder containing `dave_linux.py`.
+3. Run Dave. On first launch, Dave automatically installs any missing required packages from `requirements.txt`:
+   ```sh
+   python3 dave_linux.py
+   ```
+   To install packages manually instead:
+   ```sh
+   python3 -m venv venv
+   source venv/bin/activate
+   python -m pip install --upgrade pip --upgrade-strategy eager
+   pip install -r requirements.txt
+   ```
 
 ```sh
-sudo apt update
-sudo apt install python3 python3-venv python3-pip
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install --upgrade pip --upgrade-strategy eager
+pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
 ```
 
-From the folder containing `dave_linux.py`, create the environment and install dependencies:
+### Notes on Package Compatibility
 
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install mendeleev sympy numpy matplotlib rich yfinance pandas scipy deep-translator
-```
+The following packages have known compatibility issues with Python 3.15+:
 
-Start Dave with:
-
-```sh
-python dave_linux.py
-```
-
-On a Linux desktop, plots use the available Tk display backend. On a headless machine, Dave uses Matplotlib’s non-interactive Agg backend; plot windows cannot open there.
+- **openmm**: No compatible versions available for Python 3.15+. Please use the latest available version (Python 3.14) or remove this dependency if not needed.
+- **GUDHI**: Requires Python 3.5-3.6 only and is incompatible with Python 3.12+. If you need GUDHI, use Python 3.6.
 
 ## Windows
 
-1. Install Python 3.12 or newer from [python.org](https://www.python.org/downloads/). Select **Add Python to PATH** in the installer.
-2. Open PowerShell and move to the folder containing `dave_windows.py`.
-3. Create and activate a virtual environment, then install Dave’s required packages:
+1. Install Python 3.12 or newer from [python.org](https://www.python.org/downloads/). **Note: Full compatibility with all packages requires Python 3.14 or earlier; some packages are incompatible with Python 3.15+.**
+2. Open Command Prompt or PowerShell and move to the folder containing `dave_windows.py`.
+3. Run Dave. On first launch, Dave automatically installs any missing required packages from `requirements.txt`:
+   ```powershell
+   python dave_windows.py
+   ```
+   To install packages manually instead:
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip --upgrade-strategy eager
+   pip install -r requirements.txt
+   ```
 
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install mendeleev sympy numpy matplotlib rich yfinance pandas scipy deep-translator
+```sh
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip --upgrade-strategy eager
+pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
 ```
 
-If PowerShell blocks environment activation, run this in that PowerShell window and activate again:
+### Notes on Package Compatibility
 
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
+The following packages have known compatibility issues with Python 3.15+:
 
-4. Start Dave:
-
-```powershell
-python dave_windows.py
-```
+- **openmm**: No compatible versions available for Python 3.15+. Please use the latest available version (Python 3.14) or remove this dependency if not needed.
+- **GUDHI**: Requires Python 3.5-3.6 only and is incompatible with Python 3.12+. If you need GUDHI, use Python 3.6.
 
 ## Android (Termux)
 
-The Android build is intended for [Termux](https://github.com/termux/termux-app), a terminal environment for Android. Install Termux from one official source, such as [F-Droid](https://f-droid.org/packages/com.termux/) or [the Termux GitHub releases](https://github.com/termux/termux-app/releases). Do not mix installs from different sources; their app signatures can differ. See the [Termux installation notes](https://github.com/termux/termux-app#installation).
-
-Open Termux and install Python and the compiled scientific packages through Termux’s package manager:
-
-```sh
-pkg update
-pkg upgrade
-pkg install python python-pip python-numpy python-scipy python-matplotlib python-pandas
-```
-
-Allow access to shared storage if you plan to open the file from Downloads:
-
-```sh
-termux-setup-storage
-```
-
-Place `dave_android.py` in the Termux home folder. If it is in Android’s Downloads folder, copy it into Termux with:
+1. Update Termux package list.
+2. Install Python 3: `pkg install python`. **Note: Python must be version 3.14 or earlier for full compatibility.**
+3. Move to the folder containing `dave_android.py`.
+4. Run Dave. On first launch, Dave automatically installs any missing required packages from `requirements.txt`:
+   ```sh
+   python dave_android.py
+   ```
+   To install packages manually instead:
+   ```sh
+   python -m venv venv
+   source venv/bin/activate
+   python -m pip install --upgrade pip --upgrade-strategy eager
+   pip install -r requirements.txt
+   ```
 
 ```sh
-cp ~/storage/downloads/dave_android.py ~/
+python -m venv venv
+source venv/bin/activate
+python -m pip install --upgrade pip --upgrade-strategy eager
+pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
 ```
 
-Then create an environment that can see the Termux-provided compiled packages:
+### Android-Specific Compatibility Notes
 
-```sh
-cd ~
-python -m venv --system-site-packages .venv
-source .venv/bin/activate
-python -m pip install mendeleev sympy rich yfinance deep-translator
-```
-
-Launch Dave with:
-
-```sh
-python dave_android.py
-```
-
-Android package support varies by device and Termux repository. Termux supplies compiled packages such as NumPy, SciPy, Matplotlib, and Pandas because building these libraries with pip directly on a phone can be difficult. Optional scientific integrations may not be available on Android. Dave’s Android build uses a non-GUI plotting backend, so it cannot open desktop plot windows.
-
-## Using Dave
-
-At the prompt, try:
-
-```text
-2 + 2
-sqrt(81)
-derivative(x**3)
-absolute value of -5
-```
-
-Enter `help` for the in-program feature list, `selftest` to run Dave’s checks, or `quit` to exit.
-
-### Wikipedia search and articles
-
-Wikipedia commands call the MediaWiki API through the `requests` package and need an internet connection. Install it with `python3 -m pip install requests` (or `py -m pip install requests` on Windows).
-
-At Dave’s prompt, search for pages, read a short exact-title summary, or display a complete article:
-
-```text
-wikipedia_search("photosynthesis")
-wikipedia_summary("Muon")
-wikipedia_article("Muon")
-wikipedia_page_info("Muon")
-```
-
-Search results are numbered article titles. Summaries and page lookups keep the title you requested instead of replacing it with a similar-sounding title. Full articles are displayed with section headings, wrapped paragraphs, and lists. Wikipedia commands follow Dave’s selected interface language by default; pass a `language` code to override it.
-
-`selftest` reports every requested check as PASS or FAIL.
-
-## Start Dave later
-
-Each time you open a new terminal, activate the virtual environment again before running Dave.
-
-**macOS/Linux/Termux:**
-
-```sh
-source .venv/bin/activate
-```
-
-Then run the platform’s file name, for example:
-
-```sh
-python dave_linux.py
-```
-
-**Windows:**
-
-```powershell
-.venv\Scripts\Activate.ps1
-python dave_windows.py
-```
-
-**Languages**
-Dave supports English, Spanish, Japanese, Mandarin Chinese, and French. At Dave’s prompt, switch languages with `lang en`, `lang es`, `lang ja`, `lang zh`, or `lang fr`.
-
-## Optional scientific packages
-
-Dave’s required packages enable its core calculator. Other scientific integrations load only when used and may need additional packages. Use Dave’s package status report to see which optional packages are installed. You do not need the entire optional package catalog for basic calculations.
-
-Some lookup and geocoding features also require an internet connection and an available external service.
+- **openmm**: No compatible versions available. This dependency cannot be installed on Termux with current package availability. Consider removing this import if not needed for your use case, or use a different Python distribution that supports openmm.
+- **GUDHI**: Requires Python 3.5-3.6 only and is incompatible with Python 3.12+. If you need GUDHI, use Python 3.6 or an older compatible environment.
 
 ## Troubleshooting
 
-- **`python` or `python3` not found:** Install Python, reopen the terminal, and check that Python is on your PATH. On Windows, try `py`.
-- **`No module named ...`:** Activate `.venv` and install the missing required package in the commands above.
-- **PowerShell blocks activation:** Use the process-scoped execution policy command in the Windows section.
-- **A pip package fails to build on Android:** Install its Termux package if one exists. Some optional packages do not support Android.
-- **A plot does not open on Linux or Android:** The headless backend creates no GUI window. Run Dave on a desktop with a graphical display for interactive plots.
+### Package Installation Issues
 
-**If there is a bug in Dave, or the code in README.md isn't working, or any feature you would like to add to Dave, please let me know in the comments (Dave Discussions).
+If you encounter errors during installation:
 
-## Install and run the Python wheel
+1. **Update pip**: `python -m pip install --upgrade pip`
+2. **Install in correct order**: Install core packages first (numpy, matplotlib), then scientific libraries (scipy, sympy), then optional advanced packages
+3. **Python version check**: Some packages have limited Python 3.15+ compatibility. The following work but may have limitations: numpy, matplotlib, scipy, sympy, pandas, deep_translator
 
-The importable Dave library is included at `dist/dave_package_py-0.0.7-py3-none-any.whl`. The wheel is a Python library; it does not start the interactive prompt. Use the platform scripts above (`python dave_macos.py`, `python dave_windows.py`, `python dave_linux.py`, or `python dave_android.py`) when you want the full Dave prompt.
+### Fixing sympy AttributeError for `sp.E`
 
-Install from the root of this repository:
-
-**macOS or Linux**
-
-```sh
-python3 -m pip install ./dist/dave_package_py-0.0.7-py3-none-any.whl
-```
-
-**Windows PowerShell or Command Prompt**
-
-```powershell
-py -m pip install .\dist\dave_package_py-0.0.7-py3-none-any.whl
-```
-
-**Android (Termux)**
-
-```sh
-pkg install python python-numpy
-python -m pip install sympy rich
-python -m pip install ./dist/dave_package_py-0.0.7-py3-none-any.whl
-```
-
-The wheel exposes `format_wikipedia_article(title, content)` for clean paragraphs and readable equations. Fetching an article with `wikipedia_article(title)` uses `requests` and internet access. The wheel installs `requests` automatically. For standalone Dave scripts, install it with `python -m pip install requests`.
-
-After installation, run a calculation through the library:
-
-**macOS or Linux**
-
-```sh
-python3 -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
-```
-
-**Windows**
-
-```powershell
-py -c "import dave_package_py as dave; print(dave.calculate('2 + 2'))"
-```
-
-**Android (Termux)**
-
-```sh
-python -c 'import dave_package_py as dave; print(dave.calculate("2 + 2"))'
-```
-
-Each command should print `4`. The wheel requires Python 3.10 or newer. Its core calculator needs NumPy, SymPy, and Rich. Termux supplies NumPy through its package manager; `--no-deps` prevents pip from trying to replace that native NumPy package. [Termux package guidance](https://github.com/termux/termux-packages/discussions/18938). Some optional science integrations may not be available on every operating system, particularly Android.
-
-Example use from another Python program:
+If you encounter `AttributeError: module 'sympy' has no attribute 'E'`:
 
 ```python
-import dave_package_py as dave
-
-print(dave.calculate("sqrt(81) + 2**3"))
-print(dave.bmi(70, 1.75))
+# In dave_macos.py, dave_linux.py, or dave_windows.py around line 37358, 38215/20, etc., change:
+    E = sp.E
+# To one of these alternatives:
+    from sympy import E
+# Or (if you only need a few symbols):
+    E, Eq, sp = sympy.E, sympy.Eq, sympy
 ```
+
+This should fix the error since `sp.E` is deprecated in newer SymPy versions, and you need to directly access it as `sympy.E` or import it explicitly.
+
+### Fixing other deprecated attributes
+
+If you encounter similar errors with other symbols:
+
+```python
+# For specific constants that may be accessed via sp.X or sympy.X pattern
+from sympy import E, Eq  # Import these explicitly if needed elsewhere
+
+# Or use full module access:
+E = sympy.E
+Eq = sympy.Eq
+```
+
+## Features Overview
+
+Dave supports calculations in multiple scientific domains. Some features require specific optional packages:
+
+- **Math & Physics**: Full suite of mathematical formulas, constants, and operations
+- **Astronomy**: Planetary calculations, constellations, space data analysis (requires astropy, skyfield, etc.)
+- **Chemistry**: Element properties, molecular formula balancing, chemical reactions (requires mendeleev)
+- **Biology**: DNA transcription/translation, amino acid information, organism data (requires biologyns, biopython, etc.)
+- **Meteorology**: Weather predictions using OpenMeteo API (requires meteopen or weatherapi)
+- **Finance**: Stock analysis and market data (requires yfinance)
+
+## Reporting Issues
+
+If you encounter issues not covered here, report them with:
+- Python version output (`python --version`)
+- Full error message (including the line causing the error)
+- Which Dave file you're using (macOS, Windows, Linux, Android)
+- What features you were trying to use

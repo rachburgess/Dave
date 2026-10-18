@@ -1,5 +1,47 @@
 #!/usr/bin/env python3
 
+# ==========================================================
+# AUTO-INSTALL REQUIRED PACKAGES
+# ==========================================================
+import subprocess
+import sys
+import os
+
+_REQUIREMENTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "requirements.txt")
+
+# Pip package name → Python import name (when they differ)
+_PKG_IMPORT_MAP = {
+    "biopython": "Bio",
+    "deep-translator": "deep_translator",
+    "nasa-exoplanet-archive": "NasaExoplanetArchive",
+}
+
+try:
+    with open(_REQUIREMENTS_FILE, "r") as _f:
+        _required_pkgs = [line.strip() for line in _f if line.strip() and not line.startswith("#")]
+except Exception:
+    _required_pkgs = []
+
+if _required_pkgs:
+    try:
+        import importlib.util as _ilu
+        _missing = []
+        for _pkg in _required_pkgs:
+            _base = _pkg.split("[")[0].split("=")[0].strip()
+            _import_name = _PKG_IMPORT_MAP.get(_base, _base.replace("-", "_").replace(".", "_"))
+            if _ilu.find_spec(_import_name) is None:
+                _missing.append(_pkg)
+        if _missing:
+            print(f"Installing missing packages: {', '.join(_missing)} ...", flush=True)
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", "--quiet"] + _missing,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            print("Done.", flush=True)
+    except Exception:
+        pass
+
 SAVE_FILE = "variables.pkl"
 history = []
 
@@ -35137,34 +35179,162 @@ def wikipedia_page_info(title, language=None, include_content=False):
         raise ValueError("include_content must be True or False.")
     def fetch(request):
         params = {"action": "query", "prop": "info|extracts", "titles": title,
-                  "redirects": "1", "inprop": "url", "explaintext": "1"}
-        if include_content:
-            params["exsectionformat"] = "wiki"
-        else:
-            params.update({"exintro": "1", "exsentences": "3"})
+                  "redirects": "1", "inprop": "url", "explaintext": "1",
+                  "exintro": "1", "exsentences": "3"}
         page = _wikipedia_page_from_response(request(params))
         if "error" in page:
             return page
         result = {"title": page.get("title", title), "url": page.get("fullurl", ""),
                   "pageid": page.get("pageid"), "summary": page.get("extract", "")}
         if include_content:
-            result["content"] = page.get("extract", "")
+            parsed = request({"action": "parse", "page": title, "prop": "text",
+                              "redirects": "1", "disabletoc": "1"}).get("parse", {})
+            if not isinstance(parsed, dict) or not parsed.get("text"):
+                return {"error": "page_not_found", "message": "Wikipedia page was not found or had no article text."}
+            result["content"] = _wikipedia_html_to_wikitext(parsed["text"])
         return result
     return _wikipedia_call(language, fetch)
 
 
 def wikipedia_article(title, language=None):
-    """Fetch and return the complete text of a Wikipedia article."""
+    """Fetch complete parsed article HTML, retaining math markup for formatting."""
     title = str(title).strip()
     if not title:
         raise ValueError("title must not be empty.")
     def fetch(request):
-        data = request({"action": "query", "prop": "extracts", "titles": title,
-                        "redirects": "1", "explaintext": "1",
-                        "exsectionformat": "wiki"})
-        page = _wikipedia_page_from_response(data)
-        return page if "error" in page else page.get("extract", "")
+        data = request({"action": "parse", "page": title, "prop": "text",
+                        "redirects": "1", "disabletoc": "1"})
+        parsed = data.get("parse", {})
+        article_html = parsed.get("text", "") if isinstance(parsed, dict) else ""
+        if not article_html:
+            return {"error": "page_not_found", "message": "Wikipedia page was not found or had no article text."}
+        return _wikipedia_html_to_wikitext(article_html)
     return _wikipedia_call(language, fetch)
+
+
+def _wikipedia_html_to_wikitext(source):
+    """Turn MediaWiki HTML into formatter input while retaining TeX annotations."""
+    from html.parser import HTMLParser
+
+    class ArticleParser(HTMLParser):
+        _skip_classes = {"reference", "mw-editsection", "noprint", "metadata", "mw-cite-backlink"}
+        _void_tags = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
+
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.output = []
+            self.stack = []
+            self.skip_stack = []
+            self.math = None
+            self.annotation = False
+            self.list_depth = 0
+            self.heading = None
+
+        def _break(self):
+            if self.output and not self.output[-1].endswith("\n"):
+                self.output.append("\n")
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            classes = set((attrs.get("class") or "").split())
+            if tag not in self._void_tags:
+                self.stack.append(tag)
+            if self.skip_stack:
+                if tag not in self._void_tags:
+                    self.skip_stack.append(tag)
+                return
+            if classes & self._skip_classes:
+                self.skip_stack.append(tag)
+                return
+            if tag in {"style", "script"}:
+                self.skip_stack.append(tag)
+                return
+            if self.math is not None:
+                if tag == "annotation" and "application/x-tex" in (attrs.get("encoding") or ""):
+                    self.annotation = True
+                if tag == "img" and (attrs.get("alttext") or attrs.get("alt")):
+                    self.math["fallback"] = attrs.get("alttext") or attrs.get("alt")
+                return
+            if "mwe-math-element" in classes or tag == "math":
+                self.math = {"tag": tag, "depth": len(self.stack), "tex": [],
+                             "fallback": attrs.get("alttext", "") or attrs.get("alt", "")}
+                return
+            if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+                self._break()
+                level = max(2, int(tag[1]))
+                self.output.append("=" * level + " ")
+                self.heading = (tag, len(self.stack))
+                return
+            if tag in {"p", "div", "section", "article", "blockquote", "figure", "figcaption", "tr"}:
+                self._break()
+            elif tag == "br":
+                self._break()
+            elif tag in {"ul", "ol"}:
+                self.list_depth += 1
+                self._break()
+            elif tag == "li":
+                self._break()
+                self.output.append(("* " if self.list_depth <= 1 else "** " * (self.list_depth - 1) + "* "))
+            elif tag in {"td", "th"} and self.output and not self.output[-1].endswith("\n"):
+                self.output.append(" | ")
+            elif tag in {"b", "strong", "i", "em", "sup", "sub"}:
+                return
+
+        def handle_endtag(self, tag):
+            if tag in self._void_tags:
+                return
+            if self.skip_stack:
+                if self.skip_stack[-1] == tag:
+                    self.skip_stack.pop()
+                elif tag in self.skip_stack:
+                    while self.skip_stack and self.skip_stack[-1] != tag:
+                        self.skip_stack.pop()
+                    if self.skip_stack:
+                        self.skip_stack.pop()
+                if self.stack:
+                    self.stack.pop()
+                return
+            if self.math is not None:
+                if tag == "annotation":
+                    self.annotation = False
+                if tag == self.math["tag"] and len(self.stack) == self.math["depth"]:
+                    latex = "".join(self.math["tex"]).strip() or self.math["fallback"].strip()
+                    if latex:
+                        self.output.append("{\\displaystyle " + latex + "}")
+                    self.math = None
+                    self.annotation = False
+                if self.stack:
+                    self.stack.pop()
+                return
+            if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+                level = int(tag[1])
+                self.output.append(" " + "=" * max(2, 7 - level))
+                self._break()
+                self.heading = None
+            elif tag in {"p", "div", "section", "article", "blockquote", "figure", "figcaption", "tr", "li"}:
+                self._break()
+            elif tag in {"ul", "ol"}:
+                self.list_depth = max(0, self.list_depth - 1)
+                self._break()
+            if self.stack:
+                self.stack.pop()
+
+        def handle_data(self, data):
+            if self.skip_stack:
+                return
+            if self.math is not None:
+                if self.annotation:
+                    self.math["tex"].append(data)
+                return
+            self.output.append(data)
+
+    parser = ArticleParser()
+    try:
+        parser.feed(str(source or ""))
+        parser.close()
+    except Exception:
+        return str(source or "")
+    return "".join(parser.output)
 
 
 def _format_wikipedia_article(title, content, width=72):
@@ -35173,7 +35343,7 @@ def _format_wikipedia_article(title, content, width=72):
     import textwrap
     width = max(36, int(width))
     title = str(title).strip() or "Wikipedia Article"
-    text = str(content or "")
+    text = _wikipedia_html_to_wikitext(content)
     # Page extracts may repeat their title and split display equations across
     # lines. Join each complete TeX display block before formatting the prose.
     source_lines = text.replace("\r\n", "\n").replace("\r", "\n").splitlines()
@@ -35229,10 +35399,17 @@ def _format_wikipedia_article(title, content, width=72):
                  "delta": "δ", "Delta": "Δ", "epsilon": "ε", "theta": "θ",
                  "lambda": "λ", "mu": "μ", "nu": "ν", "pi": "π",
                  "rho": "ρ", "sigma": "σ", "Sigma": "Σ", "tau": "τ",
-                 "phi": "φ", "omega": "ω", "hbar": "ħ"}
+                 "phi": "φ", "omega": "ω", "varepsilon": "ϵ", "varphi": "ϕ",
+                 "hbar": "ħ", "nabla": "∇"}
         symbols = {"times": "×", "cdot": "·", "pm": "±", "le": "≤",
                    "ge": "≥", "neq": "≠", "approx": "≈", "infty": "∞",
-                   "partial": "∂", "sim": "∼", "to": "→", "rightarrow": "→"}
+                   "partial": "∂", "sim": "∼", "to": "→", "rightarrow": "→",
+                   "leftrightarrow": "↔", "equiv": "≡", "propto": "∝",
+                   "in": "∈", "notin": "∉", "perp": "⊥", "infty": "∞",
+                   "sum": "∑", "prod": "∏", "int": "∫", "oint": "∮",
+                   "forall": "∀", "exists": "∃", "land": "∧", "lor": "∨",
+                   "vert": "|", "Vert": "‖", "langle": "⟨", "rangle": "⟩",
+                   "{": "{", "}": "}", "_": "_", "%": "%", "$": "$"}
 
         def group(index):
             while index < len(source) and source[index].isspace():
@@ -35271,9 +35448,14 @@ def _format_wikipedia_article(title, content, width=72):
                     elif command in {"mathrm", "mathbf", "mathit", "text", "operatorname"}:
                         value, index = group(index)
                         pieces.append(value)
-                    elif command in {"left", "right", "displaystyle", ",", "!", ";", "quad", "qquad"}:
+                    elif command in {"left", "right", "displaystyle", "textstyle", "scriptstyle",
+                                    "limits", "nolimits", ",", "!", ";", ":", "quad", "qquad"}:
                         if command in {"quad", "qquad"}:
                             pieces.append(" ")
+                    elif command in {"begin", "end"}:
+                        _, index = group(index)
+                    elif command == "\\":
+                        pieces.append("; ")
                     elif command in greek:
                         pieces.append(greek[command])
                     elif command in symbols:
@@ -35287,7 +35469,11 @@ def _format_wikipedia_article(title, content, width=72):
                     operator = char
                     value, index = group(index + 1)
                     value = value.strip()
-                    pieces.append(operator + (value if len(value) == 1 else f"({value})"))
+                    superscript_map = str.maketrans("0123456789+-=()", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾")
+                    if operator == "^" and value and all(char in "0123456789+-=()" for char in value):
+                        pieces.append(value.translate(superscript_map))
+                    else:
+                        pieces.append(operator + (value if len(value) == 1 else f"({value})"))
                     continue
                 if char == "{":
                     value, index = group(index)
@@ -35305,7 +35491,7 @@ def _format_wikipedia_article(title, content, width=72):
 
         plain, _ = sequence()
         plain = re.sub(r"(?<=\d)(?=[A-Za-zα-ωΓΔ∂π])", " ", plain)
-        plain = re.sub(r"(?<=[A-Za-zα-ωΓΔ∂π])(?=[A-Za-zα-ωΓΔ∂π])", " ", plain)
+        plain = re.sub(r"(?<=[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁾)])(?=[A-Za-zα-ωΓΔ∂π])", " ", plain)
         plain = re.sub(r"\s*/\s*", " / ", plain)
         plain = re.sub(r"\s+", " ", plain)
         return plain.strip()
@@ -35337,7 +35523,13 @@ def _format_wikipedia_article(title, content, width=72):
         converted.append(latex_to_plain(text[body_start:body_end]))
         cursor = end
     text = "".join(converted)
+    for pattern in (r"\\\((.+?)\\\)", r"\\\[(.+?)\\\]",
+                    r"\$\$(.+?)\$\$", r"(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)"):
+        text = re.sub(pattern, lambda match: latex_to_plain(match.group(1)),
+                      text, flags=re.DOTALL)
     text = re.sub(r"(?<=\d)\*(?=\d)", "×", text)
+    # Escape backslashes and dollar signs for Rich console output (markup=False doesn't escape them)
+    text = text.replace("\\\\", "\\\\").replace("$", "\\$")
     output = [title, "═" * min(len(title), width), ""]
     paragraph = []
 
@@ -35425,13 +35617,31 @@ A long explanatory paragraph with enough words to wrap cleanly across a narrow t
         "{\\displaystyle \\Gamma = \\frac{G_{\\text{F}}^{2}m_{\\mu}^{5}}"
         "{192\\pi^{3}} I(\\frac{m_{\\text{e}}^{2}}{m_{\\mu}^{2}})}",
     )
-    expected_rate = "Γ = (G_F^2 m_μ^5) / (192 π^3) I((m_e^2) / (m_μ^2))"
+    expected_rate = "Γ = (G_F² m_μ⁵) / (192 π³) I((m_e²) / (m_μ²))"
     if expected_rate not in decay_rate or "\\frac" in decay_rate or "displaystyle" in decay_rate:
         raise AssertionError("Muon decay-rate equation was not rendered as readable math.")
+    html_math = _format_wikipedia_article(
+        "Muon", '<p>Before <span class="mwe-math-element"><math><semantics>'
+        '<mrow></mrow><annotation encoding="application/x-tex">\\frac{a+b}{c}</annotation>'
+        '</semantics></math></span> after.</p>'
+    )
+    if "(a+b) / (c)" not in html_math or "<span" in html_math:
+        raise AssertionError("MediaWiki HTML math annotation was not extracted.")
+    html_heading = _format_wikipedia_article("Muon", "<h2>Decay</h2><p>Equation.</p>")
+    if "Decay\n─────" not in html_heading:
+        raise AssertionError("Parsed MediaWiki section headings were not preserved.")
+    alt_math = _format_wikipedia_article(
+        "Test", '<p><span class="mwe-math-element"><img alttext="\\frac{a}{b}" /></span></p>'
+    )
+    if "(a) / (b)" not in alt_math:
+        raise AssertionError("MediaWiki math-image alt text was not converted.")
+    delimited_math = _format_wikipedia_article("Test", r"Inline \(E=mc^2\) and \[\frac{x}{y}\].")
+    if "E=mc²" not in delimited_math or "(x) / (y)" not in delimited_math:
+        raise AssertionError("Inline or display LaTeX delimiters were not converted.")
     duplicate_math = _format_wikipedia_article(
         "Muon", "3.4 ∗\n\n10\n\n− 5\n\n{\\displaystyle 3.4*10^{-5}}"
     )
-    if duplicate_math.count("3.4×10^(-5)") != 1 or "3.4 ∗" in duplicate_math:
+    if duplicate_math.count("3.4×10⁻⁵") != 1 or "3.4 ∗" in duplicate_math:
         raise AssertionError("Split duplicate math fragments were not removed.")
     return "article headings, wrapped prose, math, and lists formatted"
 
@@ -35495,10 +35705,15 @@ def _wikipedia_exact_title_selftest():
     requests = []
     def fake_request(params):
         requests.append(dict(params))
+        if params.get("action") == "parse":
+            return {"parse": {"title": "Muon", "text":
+                    '<p>Muon article paragraph one.</p><p>Muon article paragraph two. '
+                    '<span class="mwe-math-element"><math><semantics>'
+                    '<annotation encoding="application/x-tex">\\frac{a}{b}</annotation>'
+                    '</semantics></math></span></p>'}}
         page = {"title": "Muon", "pageid": 123,
                 "fullurl": "https://en.wikipedia.org/wiki/Muon",
-                "extract": "Muon summary" if "exintro" in params else
-                           "Muon article paragraph one.\n\nMuon article paragraph two."}
+                "extract": "Muon summary"}
         return {"query": {"pages": [page]}}
     original = globals()["_wikipedia_call"]
     globals()["_wikipedia_call"] = lambda language, operation: operation(fake_request)
@@ -35511,8 +35726,10 @@ def _wikipedia_exact_title_selftest():
         if info.get("title") != "Muon" or info.get("pageid") != 123:
             raise AssertionError("Page information was not mapped from the API response.")
         full_text = wikipedia_article("Muon")
-        if "paragraph two" not in full_text or "exintro" in requests[-1]:
-            raise AssertionError("Full-article lookup did not request the complete extract.")
+        if "paragraph two" not in full_text or "{\\displaystyle" not in full_text:
+            raise AssertionError("Full-article lookup did not preserve complete text and equation TeX.")
+        if requests[-1].get("action") != "parse" or requests[-1].get("prop") != "text":
+            raise AssertionError("Full-article lookup did not request parsed MediaWiki HTML.")
         return "MediaWiki summary, page-info, and full-article requests passed"
     finally:
         globals()["_wikipedia_call"] = original
@@ -41998,7 +42215,7 @@ wikipedia_summary(query, sentences=3, language="en")
 wikipedia_page_info(title, language="en", include_content=False)
 wikipedia_article(title, language=None)
     Search titles, fetch summaries, page details, or full article text.
-    Full articles are formatted with wrapped paragraphs, section headings, and lists.
+    Full articles include readable equations, wrapped paragraphs, section headings, and lists.
     Uses the requests package and requires internet access. Install requests with python -m pip install requests.
     Calls use the public MediaWiki API; internet access is required.
 
@@ -42834,7 +43051,7 @@ LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
        'clima, ecología, geología, geografía, oceanografía, ingeniería, materiales, '
        'neurociencia, ciencia cuántica, procesamiento de señales y visualización.\n'
        'WIKIPEDIA: wikipedia_search("tema"), wikipedia_summary("tema"), '
-       'wikipedia_article("título"). Requiere requests (python -m pip install requests) y conexión a internet.\n'
+       'wikipedia_article("título"). Las ecuaciones se muestran en formato legible.\nRequiere requests (python -m pip install requests) y conexión a internet.\n'
        'COMANDOS DE FUNCIONES DISPONIBLES:',
  'fr': 'DAVE — AIDE DE LA CALCULATRICE SCIENTIFIQUE\n'
        'LANGUE : Choisissez avec lang en, lang es, lang ja, lang zh ou lang fr. '
@@ -42848,7 +43065,7 @@ LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
        'océanographie, ingénierie, matériaux, neurosciences, science quantique, '
        'traitement du signal et visualisation.\n'
        'WIKIPÉDIA : wikipedia_search("sujet"), wikipedia_summary("sujet"), '
-       'wikipedia_article("titre"). Nécessite requests (python -m pip install requests) et une connexion Internet.\n'
+       'wikipedia_article("titre"). Les équations sont affichées dans un format lisible.\nNécessite requests (python -m pip install requests) et une connexion Internet.\n'
        'RÉPERTOIRE DES COMMANDES DE FONCTIONS DISPONIBLES :',
  'ja': 'DAVE — 科学計算機ヘルプ\n'
        '言語: lang en、lang es、lang ja、lang zh、lang frで設定します。関数名はコマンド一覧の表記どおりに入力します。\n'
@@ -42857,13 +43074,13 @@ LOCALIZED_HELP_PAGES = {'en': 'DAVE — SCIENTIFIC CALCULATOR HELP\n'
        '科学分野: '
        '数学、代数、微積分、統計、確率、天文学、物理学、化学、生物学、生理学、医学、薬物動態、気象、気候、生態学、地質学、地理学、海洋学、工学、材料科学、神経科学、量子科学、信号処理、可視化。\n'
        'Wikipedia: '
-       'wikipedia_search("トピック")、wikipedia_summary("トピック")、wikipedia_article("記事名")。requestsパッケージとネット接続が必要です。\n'
+       'wikipedia_search("トピック")、wikipedia_summary("トピック")、wikipedia_article("記事名")。数式は読みやすい形式で表示されます。requestsパッケージとネット接続が必要です。\n'
        '利用可能な関数コマンド:',
  'zh': 'DAVE — 科学计算器帮助\n'
        '语言：使用 lang en、lang es、lang ja、lang zh 或 lang fr 设置。函数名称请按命令目录中的写法输入。\n'
        '使用：输入 2 + 2 或 sqrt(81) 等算式。输入 help 查看本指南，selftest 检查函数，history 查看历史，quit 退出。\n'
        '科学领域：数学、代数、微积分、统计、概率、天文学、物理、化学、生物、生理学、医学、药代动力学、气象、气候、生态、地质、地理、海洋学、工程、材料、神经科学、量子科学、信号处理和可视化。\n'
-       '维基百科：wikipedia_search("主题")、wikipedia_summary("主题")、wikipedia_article("标题")。需要 requests 软件包（python -m pip install requests）和互联网连接。\n'
+       '维基百科：wikipedia_search("主题")、wikipedia_summary("主题")、wikipedia_article("标题")。公式以易读格式显示。需要 requests 软件包（python -m pip install requests）和互联网连接。\n'
        '可用函数命令目录：'}
 ABOUT_TEXTS = {'en': 'Dave is a scientific calculator with mathematical, statistical, and scientific '
        'tools. Set the interface language with lang en, lang es, lang ja, lang zh, or '
@@ -43847,13 +44064,28 @@ variables["ans"] = 0
 
 def _evaluate_expression_command(expression):
     """Evaluate an expression through Dave's real expression namespace."""
-    expr = sp.sympify(expression, locals={**variables, **user_vars})
+    try:
+        expr = sp.sympify(expression, locals={**variables, **user_vars})
+    except (sp.SympifyError, SyntaxError, ValueError) as exc:
+        raise ValueError(
+            f"Not a valid mathematical expression: {expression!r}"
+        ) from exc
     expr = sp.simplify(expr)
     if expr.has(sp.zoo):
         raise ZeroDivisionError("Division by zero")
     if hasattr(expr, "evalf") and expr.is_number:
         expr = expr.evalf()
     return expr
+
+
+def _safe_sympify(expression):
+    """Sympify an expression, raising a clear error on parse failure."""
+    try:
+        return sp.sympify(expression, locals={**variables, **user_vars})
+    except (sp.SympifyError, SyntaxError, ValueError) as exc:
+        raise ValueError(
+            f"Not a valid mathematical expression: {expression!r}"
+        ) from exc
 
 
 def _expression_command_selftest():
@@ -43965,10 +44197,15 @@ while True:
 
             expr = problem[6:-1]
 
-            parsed = sp.sympify(
-                expr,
-                locals={**variables, **user_vars}
-            )
+            try:
+                parsed = sp.sympify(
+                    expr,
+                    locals={**variables, **user_vars}
+                )
+            except (sp.SympifyError, SyntaxError, ValueError) as exc:
+                raise ValueError(
+                    f"Not a valid mathematical expression: {expr!r}"
+                ) from exc
 
             f = sp.lambdify(x, parsed, modules=["numpy"])
 
@@ -44006,7 +44243,7 @@ while True:
 
             f = sp.lambdify(
                 (x, y),
-                sp.sympify(expr, locals={**variables, **user_vars}),
+                _safe_sympify(expr),
                 "numpy"
             )
 
@@ -44043,10 +44280,15 @@ while True:
 
             left, right = problem.split("=", 1)
 
-            value = sp.sympify(
-                right,
-                locals={**variables, **user_vars}
-            )
+            try:
+                value = sp.sympify(
+                    right,
+                    locals={**variables, **user_vars}
+                )
+            except (sp.SympifyError, SyntaxError, ValueError) as exc:
+                raise ValueError(
+                    f"Not a valid mathematical expression: {right!r}"
+                ) from exc
 
             var_name = left.strip()
 
@@ -44122,6 +44364,35 @@ while True:
             except Exception as e:
                 console.print(f"[red]{tr('wikipedia_error')}:[/red] {e}")
             continue
+
+        # ---------------- FUNCTION CALLS ----------------
+        # Dispatch function-call syntax like stock_name("GOOG") directly to
+        # the registered Python function. Passing such calls to sympy would
+        # make sympy call the function internally and then fail trying to
+        # parse string results (e.g. "Alphabet Inc.") as math expressions.
+        import ast as _ast
+        try:
+            _fc_node = _ast.parse(problem, mode="eval").body
+        except SyntaxError:
+            _fc_node = None
+        if isinstance(_fc_node, _ast.Call) and isinstance(_fc_node.func, _ast.Name):
+            _fc_name = _fc_node.func.id
+            _fc_func = variables.get(_fc_name) or user_vars.get(_fc_name)
+            if callable(_fc_func):
+                try:
+                    _fc_args = [_ast.literal_eval(a) for a in _fc_node.args]
+                    _fc_kwargs = {
+                        kw.arg: _ast.literal_eval(kw.value)
+                        for kw in _fc_node.keywords if kw.arg
+                    }
+                    _fc_result = _fc_func(*_fc_args, **_fc_kwargs)
+                    console.print(str(_fc_result))
+                    variables["ans"] = _fc_result
+                    history.append(f"{problem} = {_fc_result}")
+                    continue
+                except Exception as e:
+                    console.print(f"[red]{tr('error')}:[/red] {e}")
+                    continue
 
         try:
 
