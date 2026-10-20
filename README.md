@@ -178,34 +178,6 @@ If you encounter errors during installation:
 2. **Install in correct order**: Install core packages first (numpy, matplotlib), then scientific libraries (scipy, sympy), then optional advanced packages
 3. **Python version check**: Some packages have limited Python 3.15+ compatibility. The following work but may have limitations: numpy, matplotlib, scipy, sympy, pandas, deep_translator
 
-### Fixing sympy AttributeError for `sp.E`
-
-If you encounter `AttributeError: module 'sympy' has no attribute 'E'`:
-
-```python
-# In dave_macos.py, dave_linux.py, or dave_windows.py around line 37358, 38215/20, etc., change:
-    E = sp.E
-# To one of these alternatives:
-    from sympy import E
-# Or (if you only need a few symbols):
-    E, Eq, sp = sympy.E, sympy.Eq, sympy
-```
-
-This should fix the error since `sp.E` is deprecated in newer SymPy versions, and you need to directly access it as `sympy.E` or import it explicitly.
-
-### Fixing other deprecated attributes
-
-If you encounter similar errors with other symbols:
-
-```python
-# For specific constants that may be accessed via sp.X or sympy.X pattern
-from sympy import E, Eq  # Import these explicitly if needed elsewhere
-
-# Or use full module access:
-E = sympy.E
-Eq = sympy.Eq
-```
-
 ## Features Overview
 
 Dave supports calculations in multiple scientific domains. Some features require specific optional packages:
