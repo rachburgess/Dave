@@ -189,6 +189,20 @@ Dave supports calculations in multiple scientific domains. Some features require
 - **Meteorology**: Weather predictions using OpenMeteo API (requires meteopen or weatherapi)
 - **Finance**: Stock analysis and market data (requires yfinance)
 
+### Comparing Data Fits
+
+Use `compare_fits` to fit common models to paired measurements and rank them by corrected Akaike information criterion (AICc). Lower AICc is preferred; the result also includes each model's equation, fitted parameters, RMSE, and R².
+
+```python
+compare_fits(
+    [1, 2, 3, 4, 5, 6],
+    [2.1, 3.9, 6.2, 7.8, 10.1, 12.2],
+    ["linear", "quadratic"],
+)
+```
+
+Available models are `linear`, `quadratic`, `exponential`, and `power`. Omit the model list to compare all four. The power model requires positive x values. AICc requires at least two more measurements than the number of fitted parameters. Dave requires SciPy for this command.
+
 ## Reporting Issues
 
 If you encounter issues not covered here, report them with:

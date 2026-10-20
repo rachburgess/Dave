@@ -15979,6 +15979,97 @@ def scipy_curve_fit(
     }
 
 
+def compare_fits(xdata, ydata, models=None):
+    """Fit common models to paired data and rank them by corrected AIC."""
+    import numpy as np
+    from scipy.optimize import curve_fit
+
+    x = np.asarray(xdata, dtype=float)
+    y = np.asarray(ydata, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("xdata and ydata must be one-dimensional arrays of equal length")
+    if x.size < 3 or not np.all(np.isfinite(x)) or not np.all(np.isfinite(y)):
+        raise ValueError("provide at least three finite x/y data pairs")
+
+    candidates = {
+        "linear": (
+            lambda x, slope, intercept: slope * x + intercept,
+            ("slope", "intercept"),
+            np.polyfit(x, y, 1),
+            "slope*x + intercept",
+        ),
+        "quadratic": (
+            lambda x, a, b, c: a * x**2 + b * x + c,
+            ("a", "b", "c"),
+            np.polyfit(x, y, 2),
+            "a*x^2 + b*x + c",
+        ),
+        "exponential": (
+            lambda x, a, b, c: a * np.exp(b * x) + c,
+            ("a", "b", "offset"),
+            (float(np.ptp(y) or 1.0), 1.0 / (float(np.ptp(x)) or 1.0), float(np.min(y))),
+            "a*exp(b*x) + offset",
+        ),
+        "power": (
+            lambda x, a, b, c: a * np.power(x, b) + c,
+            ("a", "b", "offset"),
+            (1.0, 1.0, 0.0),
+            "a*x^b + offset",
+        ),
+    }
+    selected = list(candidates) if models is None else (
+        [models] if isinstance(models, str) else list(models)
+    )
+    if not selected:
+        raise ValueError("select at least one model")
+
+    results = []
+    errors = {}
+    for name in selected:
+        key = str(name).lower()
+        if key not in candidates:
+            errors[key] = "unknown model; choose linear, quadratic, exponential, or power"
+            continue
+        function, parameter_names, initial, formula = candidates[key]
+        parameter_count = len(parameter_names)
+        # Include the estimated residual variance in the AICc parameter count.
+        aicc_parameter_count = parameter_count + 1
+        if x.size <= aicc_parameter_count + 1:
+            errors[key] = "not enough data points for corrected AIC"
+            continue
+        if key == "power" and np.any(x <= 0):
+            errors[key] = "power model requires all x values to be positive"
+            continue
+        try:
+            parameters, _ = curve_fit(function, x, y, p0=initial, maxfev=20000)
+            predicted = function(x, *parameters)
+            residual_sum = float(np.sum((y - predicted) ** 2))
+            rmse = float(np.sqrt(residual_sum / x.size))
+            total_sum = float(np.sum((y - np.mean(y)) ** 2))
+            r_squared = float(1.0 - residual_sum / total_sum) if total_sum else (
+                1.0 if residual_sum == 0 else float("-inf")
+            )
+            safe_residual = max(residual_sum, np.finfo(float).tiny)
+            aic = x.size * np.log(safe_residual / x.size) + 2 * aicc_parameter_count
+            aicc = float(aic + (
+                2 * aicc_parameter_count * (aicc_parameter_count + 1)
+                / (x.size - aicc_parameter_count - 1)
+            ))
+            results.append({
+                "model": key,
+                "formula": formula,
+                "parameters": dict(zip(parameter_names, map(float, parameters))),
+                "rmse": rmse,
+                "r_squared": r_squared,
+                "aicc": aicc,
+            })
+        except (RuntimeError, ValueError, FloatingPointError) as exc:
+            errors[key] = str(exc)
+
+    results.sort(key=lambda result: result["aicc"])
+    return {"ranking": results, "errors": errors, "criterion": "AICc (lower is better)"}
+
+
 # ==========================================================
 # SCIPY — INTERPOLATION
 # ==========================================================
@@ -40980,6 +41071,9 @@ choice([1,2,3])
 Linear Regression:
 linreg([1,2,3], [2,4,6])
 
+Compare Candidate Fits:
+compare_fits([1,2,3,4,5,6], [2.1,3.9,6.2,7.8,10.1,12.2], ["linear", "quadratic"])
+
 Polynomial Fit:
 polyfit([1,2,3], [1,4,9], 2)
 
@@ -41902,6 +41996,9 @@ scipy_minimize(...)
 
 scipy_curve_fit(...)
     Fit functions to experimental data.
+
+compare_fits(xdata, ydata, models=None)
+    Compare linear, quadratic, exponential, and power fits using AICc.
 
 scipy_interpolate(...)
     Perform numerical interpolation.
@@ -43667,6 +43764,7 @@ variables = {
 
     "linreg": linear_regression,
     "polyfit": poly_fit,
+    "compare_fits": compare_fits,
 
     "probability": probability,
     "binomial_probability": binomial_probability,
