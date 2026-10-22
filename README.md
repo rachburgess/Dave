@@ -33,10 +33,12 @@ Copy the selected file to your device and run the matching instructions below fr
 python3 -m venv venv
 source venv/bin/activate
 python -m pip install --upgrade pip --upgrade-strategy eager
-pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm  # Note: openmm may not be available for Python 3.15+
+pip install sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm  # Note: openmm may not be available for Python 3.15+
 ```
 
 ### Notes on Package Compatibility
+
+The Dave 1.0.1 wheel supports Python 3.10 through 3.15. The current Mendeleev release declares support only for Python versions below 3.15, so Dave skips that dependency on Python 3.15; element-property features that need Mendeleev are unavailable there. Other optional scientific packages have their own Python-version limits.
 
 The following packages have known compatibility issues with Python 3.15+:
 
@@ -99,7 +101,7 @@ Dave supports over 150 scientific packages across multiple domains:
 python3 -m venv venv
 source venv/bin/activate
 python -m pip install --upgrade pip --upgrade-strategy eager
-pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
+pip install sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
 ```
 
 ### Notes on Package Compatibility
@@ -129,7 +131,7 @@ The following packages have known compatibility issues with Python 3.15+:
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip --upgrade-strategy eager
-pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
+pip install sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
 ```
 
 ### Notes on Package Compatibility
@@ -160,7 +162,7 @@ The following packages have known compatibility issues with Python 3.15+:
 python -m venv venv
 source venv/bin/activate
 python -m pip install --upgrade pip --upgrade-strategy eager
-pip install 'mendeleev@>=2.0' sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
+pip install sympy 'sympy<1.13' numpy matplotlib rich yfinance pandas scipy deep-translator skylight astropy-iers-data astroquery bioregistry mpmath pint earthpy h5py pyarrow plotly lmfit statsmodels uncertainties xarray anndata scanpy pysam dipy nibabel bioformats jupyter jax opt_einsum equinox splot freud-analysis spopt diffrax quantecon quantities sym spreg spglmg openmm
 ```
 
 ### Android-Specific Compatibility Notes

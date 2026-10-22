@@ -1,0 +1,5 @@
+include Dave/*.py
+include *.md
+include *.txt
+include *.toml
+include *.cfg
