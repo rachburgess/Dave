@@ -215,4 +215,4 @@ If you encounter issues not covered here, report them with:
 
 ## Supporting Dave
 
-Please try to star Dave so that we can reach our goal of 225 stars, and add Dave to Homebrew. It is also helpful to add any ideas to the comments to help improve Dave for all.
+Please try to star Dave so that we can reach our goal of 225 stars so that we can add Dave to Homebrew. It is also helpful to add any ideas to the comments to help improve Dave for all.
