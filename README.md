@@ -212,3 +212,7 @@ If you encounter issues not covered here, report them with:
 - Full error message (including the line causing the error)
 - Which Dave file you're using (macOS, Windows, Linux, Android)
 - What features you were trying to use
+
+## Supporting Dave
+
+Please try to star Dave so that we can reach our goal of 225 stars, and add Dave to Homebrew. It is also helpful to add any ideas to the comments to help improve Dave for all.
